@@ -1,7 +1,10 @@
-import { Elysia } from "elysia";
+import { app } from "./app";
+import { env } from "bun";
 
-const app = new Elysia().get("/", () => "Hello Elysia").listen(3000);
+const port = env.ENV === "dev" ? 3000 : env.PRODUCT_PORT || 8081;
 
-console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
-);
+app.listen(port, () => {
+  console.log(
+    `🦊 Server is running at ${app.server?.hostname}:${app.server?.port}`
+  );
+});
