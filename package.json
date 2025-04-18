@@ -9,7 +9,8 @@
     "@elysiajs/cors": "^1.2.0",
     "@elysiajs/jwt": "^1.2.0",
     "@prisma/client": "6.6.0",
-    "elysia": "latest"
+    "elysia": "latest",
+    "valibot": "^1.0.0"
   },
   "devDependencies": {
     "bun-types": "latest",
