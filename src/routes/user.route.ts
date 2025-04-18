@@ -1,6 +1,14 @@
 import Elysia from "elysia";
-import { createUserController } from "../controllers/user.controller";
-import { createUserSchema } from "../schemas/user.schema";
+import {
+  createUserController,
+  getUserController,
+  valifyUserController,
+} from "../controllers/user.controller";
+import {
+  createUserSchema,
+  getUserSchema,
+  verifyUserSchema,
+} from "../schemas/user.schema";
 import { errorMiddleware } from "../middlewares/error.middleware";
 
 export default new Elysia({ prefix: "/user" })
@@ -9,6 +17,8 @@ export default new Elysia({ prefix: "/user" })
     return { message: "get all users" };
   })
   .post("/", createUserController, { body: createUserSchema })
+  .post("/verify", valifyUserController, { body: verifyUserSchema })
+  .post("/signin", getUserController, { body: getUserSchema })
   .onError(({ code, error, set }) =>
     errorMiddleware({
       code: code as string,

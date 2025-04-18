@@ -27,12 +27,16 @@ export const errorMiddleware = (context: {
     const password = error.all.find(
       (x: { path: string }) => x.path === "/password"
     );
+    const verifyCode = error.all.find(
+      (x: { path: string }) => x.path === "/verifyCode"
+    );
 
     return {
       firstName: firstName?.schema?.error,
       surname: surname?.schema?.error,
       email: email?.schema?.error,
       password: password?.schema?.error,
+      verifyCode: verifyCode?.schema?.error,
     };
   }
 

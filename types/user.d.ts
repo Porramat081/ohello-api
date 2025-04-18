@@ -1,4 +1,5 @@
-import { SetType } from "./handler";
+import { UserStatus } from "@prisma/client";
+import { JWTType, SetType } from "./handler";
 
 export interface CreateUserBody {
   firstName: string;
@@ -9,5 +10,36 @@ export interface CreateUserBody {
 
 export interface CreateUserControllerProps {
   body: CreateUserBody;
+  set: SetType;
+  jwt: JWTType;
+}
+
+export interface UserPayloadType {
+  id: string;
+  email: string;
+  status: UserStatus;
+}
+
+export interface SignInBody {
+  jwt: JWTType;
+  request: Request;
+  set: SetType;
+}
+
+export interface VerifyUserBody {
+  body: {
+    verifyCode: string;
+  };
+  request: Request;
+  jwt: JWTType;
+  set: SetType;
+}
+
+export interface GetUserBody {
+  body: {
+    email: string;
+    password: string;
+  };
+  jwt: JWTType;
   set: SetType;
 }
