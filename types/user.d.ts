@@ -22,7 +22,7 @@ export interface UserPayloadType {
 
 export interface SignInBody {
   jwt: JWTType;
-  request: Request;
+  request: Request & { user: UserPayloadType };
   set: SetType;
 }
 
@@ -32,7 +32,6 @@ export interface VerifyUserBody {
   };
   request: Request;
   jwt: JWTType;
-  set: SetType;
 }
 
 export interface GetUserBody {

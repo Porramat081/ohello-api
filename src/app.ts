@@ -18,4 +18,5 @@ export const app = new Elysia()
     })
   )
   .get("/", () => "Hello Elysia")
-  .use(routes.userRoute);
+  .use(routes.userRoute)
+  .use(routes.postRoute);

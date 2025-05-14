@@ -10,6 +10,8 @@ import {
   verifyUserSchema,
 } from "../schemas/user.schema";
 import { errorMiddleware } from "../middlewares/error.middleware";
+import { checkSignIn } from "../middlewares/auth.middleware";
+import { SignInBody } from "../../types/user";
 
 export default new Elysia({ prefix: "/user" })
   .get("/", () => {
@@ -17,7 +19,10 @@ export default new Elysia({ prefix: "/user" })
     return { message: "get all users" };
   })
   .post("/", createUserController, { body: createUserSchema })
-  .post("/verify", valifyUserController, { body: verifyUserSchema })
+  .post("/verify", valifyUserController, {
+    body: verifyUserSchema,
+    beforeHandle: checkSignIn as Promise<{ message: string }> & undefined,
+  })
   .post("/signin", getUserController, { body: getUserSchema })
   .onError(({ code, error, set }) =>
     errorMiddleware({

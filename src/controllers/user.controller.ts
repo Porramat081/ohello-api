@@ -1,18 +1,16 @@
 import { UserStatus } from "@prisma/client";
 import {
-  CreateUserBody,
   CreateUserControllerProps,
   GetUserBody,
   VerifyUserBody,
 } from "../../types/user";
-import { createUserSchema } from "../schemas/user.schema";
 import {
   createUserService,
   getUserService,
   verifyUserService,
 } from "../services/user.service";
-import { CustomError, errorTransformer } from "../utils/errorHandler";
-import { jwt_sign, jwt_verify } from "../utils/jwt";
+import { CustomError } from "../utils/errorHandler";
+import { jwt_sign } from "../utils/jwt";
 
 export const createUserController = async ({
   body,
@@ -57,19 +55,11 @@ export const valifyUserController = async ({
   body,
   request,
   jwt,
-  set,
 }: VerifyUserBody) => {
   const { verifyCode } = body;
-  const token = request.headers?.get("Authorization")?.split(" ")[1];
-  if (!token) {
-    set.status = 401;
-    return { message: "Please login first" };
-  }
-  const payload = await jwt_verify(token, jwt);
-  if (!payload) {
-    set.status = 401;
-    return { message: "Unauthorized" };
-  }
+  const { user: payload } = request as Request & {
+    user: { id: string; email: string; status: UserStatus };
+  };
 
   try {
     const result = await verifyUserService(payload.id, verifyCode);
