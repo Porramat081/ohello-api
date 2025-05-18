@@ -29,12 +29,14 @@ export const errorTransformer = (error: unknown) => {
 
   if (error instanceof CustomError) {
     return { message: error.message, status: error.status, field: error.field };
+  } else if (error instanceof Prisma.PrismaClientInitializationError) {
+    return { error: "Database is unreachable. Please try again later." };
+  } else {
+    // Catch all unknown errors
+    return {
+      message: (error as { message: string }).message,
+      error: String(error),
+      status: 500,
+    };
   }
-
-  // Catch all unknown errors
-  return {
-    message: "Something went wrong in registering user",
-    error: String(error),
-    status: 500,
-  };
 };

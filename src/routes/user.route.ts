@@ -1,6 +1,7 @@
 import Elysia from "elysia";
 import {
   createUserController,
+  getMeController,
   getUserController,
   valifyUserController,
 } from "../controllers/user.controller";
@@ -10,18 +11,18 @@ import {
   verifyUserSchema,
 } from "../schemas/user.schema";
 import { errorMiddleware } from "../middlewares/error.middleware";
-import { checkSignIn } from "../middlewares/auth.middleware";
-import { SignInBody } from "../../types/user";
+import { authCheck } from "../middlewares/auth.middleware";
 
 export default new Elysia({ prefix: "/user" })
   .get("/", () => {
     console.log("get all users");
     return { message: "get all users" };
   })
+  .get("/getMe", getMeController, { beforeHandle: authCheck })
   .post("/", createUserController, { body: createUserSchema })
   .post("/verify", valifyUserController, {
     body: verifyUserSchema,
-    beforeHandle: checkSignIn as Promise<{ message: string }> & undefined,
+    beforeHandle: authCheck,
   })
   .post("/signin", getUserController, { body: getUserSchema })
   .onError(({ code, error, set }) =>

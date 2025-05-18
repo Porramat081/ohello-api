@@ -1,11 +1,11 @@
 import Elysia from "elysia";
 import { errorMiddleware } from "../middlewares/error.middleware";
 import { getPostUser } from "../controllers/post.controller";
-import { checkSignIn } from "../middlewares/auth.middleware";
+import { authCheck } from "../middlewares/auth.middleware";
 
 export default new Elysia({ prefix: "/post" })
   .get("/", getPostUser, {
-    beforeHandle: checkSignIn as Promise<{ message: string }> & undefined,
+    beforeHandle: authCheck,
   })
   .onError(({ code, error, set }) =>
     errorMiddleware({

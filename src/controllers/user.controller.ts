@@ -1,4 +1,5 @@
 import { UserStatus } from "@prisma/client";
+import { env } from "bun";
 import {
   CreateUserControllerProps,
   GetUserBody,
@@ -6,11 +7,30 @@ import {
 } from "../../types/user";
 import {
   createUserService,
+  getMeService,
   getUserService,
   verifyUserService,
 } from "../services/user.service";
 import { CustomError } from "../utils/errorHandler";
-import { jwt_sign } from "../utils/jwt";
+
+export const getMeController = async ({ jwt, request, set }: any) => {
+  const token = request.token;
+
+  if (!token) return;
+
+  const userId = await jwt.verify(token);
+
+  if (!userId) {
+    set.headers[
+      "Set-Cookie"
+    ] = `test-token=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`;
+    return;
+  }
+
+  const user = await getMeService(userId);
+
+  return user;
+};
 
 export const createUserController = async ({
   body,
@@ -28,13 +48,13 @@ export const createUserController = async ({
     });
     if (result && !result.message) {
       set.status = 201;
-      const token = await jwt_sign(
+      const token = await jwt.sign(
         {
           email: result.email as string,
           status: result.status as UserStatus,
           id: result.id as string,
         },
-        jwt
+        env.JWT_SECRET
       );
 
       return {
@@ -64,9 +84,13 @@ export const valifyUserController = async ({
   try {
     const result = await verifyUserService(payload.id, verifyCode);
     if (!result.message) {
-      const token = await jwt_sign(
-        { id: payload.id, email: payload.email, status: payload.status },
-        jwt
+      const token = await jwt.sign(
+        {
+          id: payload.id,
+          email: payload.email,
+          status: payload.status,
+        },
+        env.JWT_SECRET
       );
       return {
         token,
@@ -89,24 +113,23 @@ export const getUserController = async ({ body, jwt, set }: GetUserBody) => {
     const result = await getUserService(email, password);
     if (result && !result.message) {
       set.status = 201;
-      const token = await jwt_sign(
+      const token = await jwt.sign(
         {
           email: result.email as string,
           status: result.status as UserStatus,
           id: result.id as string,
         },
-        jwt
+        env.JWT_SECRET
       );
 
       return {
         token,
       };
-    } else {
-      throw new CustomError({
-        message: "User not found",
-        status: 403,
-      });
     }
+    throw new CustomError({
+      message: result.message,
+      status: 403,
+    });
   } catch (error) {
     throw error;
   }

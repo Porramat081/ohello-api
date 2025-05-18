@@ -72,31 +72,50 @@ export const verifyUserService = async (id: string, verifyCode: string) => {
 };
 
 export const getUserService = async (email: string, password: string) => {
-  const user = await db.users.findUnique({
-    where: {
-      email,
-    },
-    select: {
-      id: true,
-      email: true,
-      password: true,
-      status: true,
-    },
-  });
+  try {
+    const user = await db.users.findUnique({
+      where: {
+        email,
+      },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        status: true,
+      },
+    });
 
-  if (!user) {
-    return { message: "Email or Password is not correct" };
+    if (!user) {
+      return { message: "Email or Password is not correct" };
+    }
+
+    const comparePasswordResult = await comparePassword(
+      password,
+      user?.password
+    );
+
+    if (!comparePasswordResult) {
+      return { message: "Email or Password is not correct" };
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      status: user.status,
+    };
+  } catch (error) {
+    throw error;
   }
+};
 
-  const comparePasswordResult = await comparePassword(password, user?.password);
+export const getMeService = async (userId: string) => {
+  try {
+    const user = await db.users.findUnique({
+      where: { id: userId, OR: [{ status: "Active" }, { status: "Pending" }] },
+    });
 
-  if (!comparePasswordResult) {
-    return { message: "Email or Password is not correct" };
+    return user;
+  } catch (error) {
+    throw error;
   }
-
-  return {
-    id: user.id,
-    email: user.email,
-    status: user.status,
-  };
 };

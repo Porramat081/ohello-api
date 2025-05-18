@@ -38,9 +38,9 @@ export const getUserSchema = t.Object({
     error:
       "Email must be a valid email address and belong to Gmail, Yahoo, Hotmail, or Outlook.",
   }),
-  password: t.String({
-    pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[\\W_]).{8,}$",
-    error:
-      "Password must be at least 8 characters long and include uppercase letters, lowercase letters, numbers, and special characters.",
-  }),
+  // password: t.String({
+  //   pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[\\W_]).{8,}$",
+  //   error:
+  //     "Password must be at least 8 characters long and include uppercase letters, lowercase letters, numbers, and special characters.",
+  // }),
 });
