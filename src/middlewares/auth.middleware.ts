@@ -1,9 +1,22 @@
-export const authCheck = ({ jwt, request }: any) => {
-  const cookieHeader = request?.headers.get("cookie");
-  const token = cookieHeader
-    .split("; ")
-    .find((row: string) => row.startsWith("test-token="))
-    ?.split("=")[1];
+import { UserTypePayload } from "../../types/user";
 
-  request.token = token;
+interface CheckSignInType {
+  jwt: {
+    verify: (token: string) => Promise<{}>;
+  };
+  request: Request & { user?: UserTypePayload };
+  cookie: any;
+}
+
+export const checkSignIn = async ({
+  jwt,
+  request,
+  cookie: { ckTkOhello },
+}: CheckSignInType) => {
+  const token = ckTkOhello.value;
+
+  if (token) {
+    const payload = (await jwt.verify(token)) as UserTypePayload;
+    request.user = payload;
+  }
 };

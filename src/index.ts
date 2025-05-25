@@ -1,10 +1,29 @@
-import { app } from "./app";
+import Elysia from "elysia";
+
+import cors from "@elysiajs/cors";
+import jwt from "@elysiajs/jwt";
 import { env } from "bun";
 
-const port = env.ENV === "dev" ? 3001 : env.PRODUCT_PORT || 8081;
+import userRoute from "./routes/user.route";
+import { checkSignIn } from "./middlewares/auth.middleware";
 
-app.listen(port, () => {
-  console.log(
-    `🦊 Server is running at ${app.server?.hostname}:${app.server?.port}`
-  );
-});
+const app = new Elysia()
+  .use(
+    cors({
+      origin: env.ORIGIN,
+      methods: ["GET", "POST", "PUT"],
+    })
+  )
+  .use(
+    jwt({
+      name: "jwt",
+      secret: env.JWT_SECRET || "",
+    })
+  )
+  .guard({
+    beforeHandle: checkSignIn,
+  })
+  .use(userRoute)
+  .listen(env.PORT || 3001);
+
+console.log(`Server is running at ${app.server?.hostname}:${app.server?.port}`);

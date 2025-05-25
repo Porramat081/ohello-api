@@ -1,34 +1,23 @@
 import Elysia from "elysia";
-import {
-  createUserController,
-  getMeController,
-  getUserController,
-  valifyUserController,
-} from "../controllers/user.controller";
-import {
-  createUserSchema,
-  getUserSchema,
-  verifyUserSchema,
-} from "../schemas/user.schema";
-import { errorMiddleware } from "../middlewares/error.middleware";
-import { authCheck } from "../middlewares/auth.middleware";
+import { UserTypePayload } from "../../types/user";
+import { userController } from "../controllers/user.controller";
 
-export default new Elysia({ prefix: "/user" })
-  .get("/", () => {
-    console.log("get all users");
-    return { message: "get all users" };
-  })
-  .get("/getMe", getMeController, { beforeHandle: authCheck })
-  .post("/", createUserController, { body: createUserSchema })
-  .post("/verify", valifyUserController, {
-    body: verifyUserSchema,
-    beforeHandle: authCheck,
-  })
-  .post("/signin", getUserController, { body: getUserSchema })
-  .onError(({ code, error, set }) =>
-    errorMiddleware({
-      code: code as string,
-      error: error as { all: { path: string; schema?: { error?: string } }[] },
-      set,
-    })
-  );
+export default new Elysia({ prefix: "/api/user" })
+  .get("/", userController.getUser)
+  .post("/sign-in", async ({ jwt, cookie: { ckTkOhello } }: any) => {
+    const payload = {
+      id: "test-id-4545",
+      fullName: "test-full-name test-surname",
+      status: "Active",
+    };
+    const token = await jwt.sign(payload);
+    ckTkOhello.set({
+      value: token,
+      httpOnly: true,
+      // domain:'http://localhost:',
+      path: "/api/user",
+      maxAge: 24 * 2 * 60 * 60,
+      secure: true,
+    });
+    return { token };
+  });
