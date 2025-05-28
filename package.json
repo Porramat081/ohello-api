@@ -9,8 +9,10 @@
     "@elysiajs/cors": "^1.2.0",
     "@elysiajs/jwt": "^1.2.0",
     "@prisma/client": "6.6.0",
+    "bcryptjs": "^3.0.2",
     "cookie": "^1.0.2",
     "elysia": "latest",
+    "resend": "^4.5.1",
     "valibot": "^1.0.0"
   },
   "devDependencies": {

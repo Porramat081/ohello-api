@@ -1,23 +1,17 @@
 import Elysia from "elysia";
-import { UserTypePayload } from "../../types/user";
 import { userController } from "../controllers/user.controller";
+import { createUserSchema } from "../schemas/user.schema";
 
 export default new Elysia({ prefix: "/api/user" })
   .get("/", userController.getUser)
-  .post("/sign-in", async ({ jwt, cookie: { ckTkOhello } }: any) => {
-    const payload = {
-      id: "test-id-4545",
-      fullName: "test-full-name test-surname",
-      status: "Active",
+  .get("/getCookie", ({ request, cookie }: any) => {
+    const user = request.user;
+    return {
+      cookie,
+      user,
+      message: "get",
     };
-    const token = await jwt.sign(payload);
-    ckTkOhello.set({
-      value: token,
-      httpOnly: true,
-      // domain:'http://localhost:',
-      path: "/api/user",
-      maxAge: 24 * 2 * 60 * 60,
-      secure: true,
-    });
-    return { token };
-  });
+  })
+  .post("/signin", userController.testSignIn)
+  .post("/signup", userController.createUser, { body: createUserSchema })
+  .post("/sendVerify", userController.sendingVerifyCode);

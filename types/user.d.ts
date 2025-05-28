@@ -3,3 +3,10 @@ export interface UserTypePayload {
   fullName: string;
   status: string;
 }
+
+export interface UserTypeInput {
+  firstName: string;
+  surname: string;
+  email: string;
+  password: string;
+}

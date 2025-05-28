@@ -6,8 +6,10 @@ import { env } from "bun";
 
 import userRoute from "./routes/user.route";
 import { checkSignIn } from "./middlewares/auth.middleware";
+import { errorHandle } from "./middlewares/error.middleware";
 
 const app = new Elysia()
+  .onError(errorHandle)
   .use(
     cors({
       origin: env.ORIGIN,
