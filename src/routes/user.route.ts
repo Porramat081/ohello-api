@@ -12,6 +12,9 @@ export default new Elysia({ prefix: "/api/user" })
       message: "get",
     };
   })
+  .get("/getCodeVerify", userController.getCodeVerify)
+  .get("/getTimeVerify", userController.getTimeVerify)
+  .get("/resendVerify", userController.resendVerify)
   .post("/signin", userController.testSignIn)
   .post("/signup", userController.createUser, { body: createUserSchema })
   .post("/sendVerify", userController.sendingVerifyCode);

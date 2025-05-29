@@ -14,3 +14,8 @@ export const generateVerifyEmail = (
         <div>&copy; 2025 Ohello. All rights reserved.</div>
     </div>`;
 };
+
+export const generateVerifyCode = () => {
+  const code = Math.floor(100000 + Math.random() * 900000);
+  return code.toString();
+};

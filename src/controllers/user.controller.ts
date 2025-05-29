@@ -4,8 +4,13 @@ import {
   createUser,
   getUserByLogin,
   getUserData,
+  getVerify,
+  updateUser,
 } from "../services/user.service";
 import { compare, hash } from "bcryptjs";
+import { convertToLocalTime, isExceedTime } from "../utils/time";
+import { sendVerifyCode } from "../services/email.service";
+import { generateVerifyCode } from "../utils/email";
 
 interface UserControllerInput {
   request: Request & { user?: UserTypePayload };
@@ -53,9 +58,17 @@ export const userController = {
           maxAge: 24 * 2 * 60 * 60,
           secure: true,
         });
+
+        await sendVerifyCode({
+          email: result.email,
+          verifyCode: result.verifyCode as string,
+          firstName: result.firstName,
+          surname: result.surname,
+        });
+
         return {
           success: true,
-          message: "Register Success",
+          message: "Register Success , Please verify email",
         };
       }
       return {
@@ -76,6 +89,61 @@ export const userController = {
       return { user };
       // if(){}
       // const result = await
+    } catch (error) {
+      throw error;
+    }
+  },
+  getTimeVerify: async ({ request }: UserControllerInput) => {
+    try {
+      const user = request.user;
+      if (!user) {
+        throw new ErrorCustom("user is unauthorized", 401);
+      }
+      const verifyObj = await getVerify(user.id);
+      return {
+        hasVerifyCode: !!verifyObj?.verifyCode,
+        createdAt: convertToLocalTime(verifyObj?.createdAt),
+        updatedAt: convertToLocalTime(verifyObj?.updatedAt),
+        isExceedTime: isExceedTime(verifyObj?.updatedAt),
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+  getCodeVerify: async ({ request }: UserControllerInput) => {
+    try {
+      const user = request.user;
+      if (!user) {
+        throw new ErrorCustom("user is unauthorized", 401);
+      }
+      const verifyObj = await getVerify(user.id);
+      return {
+        ...verifyObj,
+        isExpired: isExceedTime(verifyObj?.updatedAt),
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+  resendVerify: async ({ request }: UserControllerInput) => {
+    try {
+      const user = request.user;
+      if (!user || user.status !== "Pending") {
+        throw new ErrorCustom("user is unauthorized", 401);
+      }
+
+      const newVerifyCode = generateVerifyCode();
+      const updatedUser = await updateUser(user.id, {
+        verifyCode: newVerifyCode,
+      });
+      const result = await sendVerifyCode({
+        email: updatedUser.email,
+        verifyCode: updatedUser.verifyCode as string,
+        firstName: updatedUser.firstName,
+        surname: updatedUser.surname,
+      });
+
+      return result;
     } catch (error) {
       throw error;
     }

@@ -13,7 +13,7 @@ export class ErrorCustom extends Error {
     message: string,
     statusCode: number,
     code = "CUSTOM_ERROR",
-    errObj: any
+    errObj?: any
   ) {
     super(message);
     this.statusCode = statusCode;
