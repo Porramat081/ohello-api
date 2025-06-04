@@ -17,4 +17,5 @@ export default new Elysia({ prefix: "/api/user" })
   .get("/resendVerify", userController.resendVerify)
   .post("/signin", userController.testSignIn)
   .post("/signup", userController.createUser, { body: createUserSchema })
+  .get("/signout", userController.signout)
   .post("/sendVerify", userController.sendingVerifyCode);

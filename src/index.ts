@@ -7,6 +7,7 @@ import { env } from "bun";
 import userRoute from "./routes/user.route";
 import { checkSignIn } from "./middlewares/auth.middleware";
 import { errorHandle } from "./middlewares/error.middleware";
+import postRoute from "./routes/post.route";
 
 const app = new Elysia()
   .onError(errorHandle)
@@ -26,6 +27,7 @@ const app = new Elysia()
     beforeHandle: checkSignIn,
   })
   .use(userRoute)
+  .use(postRoute)
   .listen(env.PORT || 3001);
 
 console.log(`Server is running at ${app.server?.hostname}:${app.server?.port}`);

@@ -12,7 +12,7 @@ import { convertToLocalTime, isExceedTime } from "../utils/time";
 import { sendVerifyCode } from "../services/email.service";
 import { generateVerifyCode } from "../utils/email";
 
-interface UserControllerInput {
+export interface UserControllerInput {
   request: Request & { user?: UserTypePayload };
   body: UserTypeInput;
   jwt: any;
@@ -181,6 +181,24 @@ export const userController = {
       });
 
       return { success: true, message: "Login Success" };
+    } catch (error) {
+      throw error;
+    }
+  },
+  signout: async ({ cookie: { ckTkOhello } }: UserControllerInput) => {
+    try {
+      const result = ckTkOhello.remove();
+      if (result) {
+        return {
+          success: true,
+          result,
+          message: "Log out successful",
+        };
+      }
+      return {
+        success: false,
+        message: "Log out unsuccessful , please try again later",
+      };
     } catch (error) {
       throw error;
     }

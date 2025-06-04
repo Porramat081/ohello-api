@@ -12,10 +12,14 @@
     "bcryptjs": "^3.0.2",
     "cookie": "^1.0.2",
     "elysia": "latest",
+    "imagekit": "^6.0.0",
+    "nodemailer": "^7.0.3",
     "resend": "^4.5.1",
+    "sharp": "^0.34.2",
     "valibot": "^1.0.0"
   },
   "devDependencies": {
+    "@types/nodemailer": "^6.4.17",
     "bun-types": "latest",
     "prisma": "^6.6.0"
   },

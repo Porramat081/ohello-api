@@ -1,8 +1,6 @@
-import { Resend } from "resend";
 import { env } from "bun";
 import { generateVerifyEmail } from "../utils/email";
-
-const resend = new Resend(env.RESEND_KEY);
+import nodemailer from "nodemailer";
 
 type SendingInput = {
   email: string;
@@ -13,17 +11,25 @@ type SendingInput = {
 );
 
 export const sendVerifyCode = async (input: SendingInput) => {
-  const verifyLink = env.SENDINGMAIL_DOMAIN + `=${input.email}`;
-  const result = await resend.emails.send({
-    from: "Ohello <noreply@yourdomain.com>",
+  const verifyLink = env.SENDINGMAIL_DOMAIN || "";
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: env.GMAIL_USER,
+      pass: env.GMAIL_APP_PASS,
+    },
+  });
+  const mailOptions = {
+    from: `Ohello Support <${env.GMAIL_USER}>`,
     to: input.email,
-    subject: "Verify Your Email",
+    subject: "Ohello Email Verification",
     html: generateVerifyEmail(
       input.email,
       input.fullname || input.firstName + " " + input.surname,
       input.verifyCode,
       verifyLink
     ),
-  });
+  };
+  const result = await transporter.sendMail(mailOptions);
   return result;
 };

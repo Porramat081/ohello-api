@@ -28,27 +28,33 @@ enum PostStatus {
 }
 
 model Users {
-  id            String     @id @default(uuid()) @map("_id")
+  id            String      @id @default(uuid()) @map("_id")
   firstName     String
   surname       String
-  email         String     @unique
+  email         String      @unique
   password      String
-  status        UserStatus @default(Pending)
+  status        UserStatus  @default(Pending)
   verifyCode    String?
   profilePicUrl String?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
   Posts         Posts[]
+  likePosts     LikePosts[]
 }
 
 model Posts {
-  id       String      @id @default(uuid()) @map("_id")
-  content  String
-  status   PostStatus  @default(Public)
-  authorId String
-  images   PostImage[]
+  id      String     @id @default(uuid()) @map("_id")
+  content String
+  status  PostStatus @default(Public)
 
-  author    Users    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+  author   Users  @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  images PostImage[]
+  like   LikePosts[]
+
+  hostPostId String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -57,6 +63,18 @@ model PostImage {
   id        String   @id @default(uuid()) @map("_id")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  posts     Posts?   @relation(fields: [postsId], references: [id], onDelete: Cascade)
-  postsId   String?
+  posts     Posts    @relation(fields: [postsId], references: [id], onDelete: Cascade)
+  postsId   String
+}
+
+model LikePosts {
+  id     String @id @default(uuid()) @map("_id")
+  post   Posts  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String
+
+  user   Users  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

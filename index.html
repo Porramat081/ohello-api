@@ -1,10 +1,13 @@
-export const generateVerifyEmail = (
-  userEmail: string,
-  nameUser: string,
-  verifyCode: string,
-  verifyLink: string
-) => {
-  return ` <div style="display: flex; flex-direction: column; align-items: center; font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <span style="font-size: 20px; font-weight: 800">Hrllo</span>
+    <div style="display: flex; flex-direction: column; align-items: center; font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;">
       <h1>Verify Your Email : ${userEmail}</h1>
       <h2>Welcome to Ohello</h2>
       <p style="font-size: 18px;">
@@ -19,10 +22,7 @@ export const generateVerifyEmail = (
         This code will expire in <span style="font-size: 20px;font-weight: 700;color: red;">10 minutes</span>. If you didn’t request this, you can
         safely ignore this email.
       </p>
-      <div>&copy; 2025 Ohello. All rights reserved.</div>`;
-};
-
-export const generateVerifyCode = () => {
-  const code = Math.floor(100000 + Math.random() * 900000);
-  return code.toString();
-};
+      <div>&copy; 2025 Ohello. All rights reserved.</div>
+    </div>
+  </body>
+</html>
