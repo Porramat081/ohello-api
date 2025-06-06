@@ -1,8 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { UserTypeInput } from "../../types/user";
 import { generateVerifyCode } from "../utils/email";
-
-const prisma = new PrismaClient();
+import { db } from "../utils/db";
 
 interface UserDataType {
   email?: string;
@@ -12,7 +11,7 @@ interface UserDataType {
 }
 
 export const getUserData = async (userId: string) => {
-  const user = await prisma.users.findUnique({
+  const user = await db.users.findUnique({
     where: {
       id: userId,
     },
@@ -21,7 +20,7 @@ export const getUserData = async (userId: string) => {
 };
 
 export const getUserByLogin = async (email: string, password: string) => {
-  const user = await prisma.users.findUnique({
+  const user = await db.users.findUnique({
     where: {
       email,
     },
@@ -30,11 +29,11 @@ export const getUserByLogin = async (email: string, password: string) => {
 };
 
 export const getUserById = async (userId: string) => {
-  const user = await prisma.users.findUnique({ where: { id: userId } });
+  const user = await db.users.findUnique({ where: { id: userId } });
 };
 
 export const getVerify = async (userId: string) => {
-  const verifyObj = await prisma.users.findUnique({
+  const verifyObj = await db.users.findUnique({
     where: { id: userId, status: "Pending" },
     select: {
       verifyCode: true,
@@ -53,7 +52,7 @@ export const createUser = async ({
   surname,
 }: UserTypeInput) => {
   const verifyCode = generateVerifyCode();
-  const newUser = await prisma.users.create({
+  const newUser = await db.users.create({
     data: {
       email,
       password,
@@ -75,7 +74,7 @@ export const createUser = async ({
 };
 
 export const updateUser = async (userId: string, data: UserDataType) => {
-  const updatedUser = await prisma.users.update({
+  const updatedUser = await db.users.update({
     where: { id: userId },
     data,
   });

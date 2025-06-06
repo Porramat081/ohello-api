@@ -42,6 +42,7 @@ export const uploadToImageKit = async (file: File, label: string) => {
       fileName: `${label}_${Date.now()}_${file.name}`,
       folder: `/${label}`,
     });
+
     return {
       url: result.url,
       fileId: result.fileId,
@@ -49,6 +50,7 @@ export const uploadToImageKit = async (file: File, label: string) => {
   } catch (error) {
     return {
       message: "Fail to upload image",
+      error,
     };
   }
 };

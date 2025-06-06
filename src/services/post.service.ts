@@ -1,26 +1,49 @@
 import { PostStatus, PrismaClient } from "@prisma/client";
+import { db } from "../utils/db";
 
-const prisma = new PrismaClient();
+interface ImageObj {
+  url: string;
+  fileId: string;
+  order: Number;
+}
 
 interface PostObjInput {
   content: string;
+  images: ImageObj[];
 }
 
 export const createNewPost = async (postObj: PostObjInput, userId: string) => {
-  const result = await prisma.posts.create({
-    data: {
-      content: postObj.content,
-      authorId: userId,
-    },
+  const newPost = await db.$transaction(async (prisma) => {
+    const post = await prisma.posts.create({
+      data: {
+        content: postObj.content,
+        authorId: userId,
+      },
+    });
+    if (postObj.images && postObj.images.length > 0) {
+      await Promise.all(
+        postObj.images.map((image, index) => {
+          return prisma.postImage.create({
+            data: {
+              url: image.url,
+              fileId: image.fileId,
+              order: Number(image.order),
+              postsId: post.id,
+            },
+          });
+        })
+      );
+    }
+    return post;
   });
-  return result;
+  return newPost;
 };
 
 export const getPostUserByUserId = async (
   userId: string,
   postType?: PostStatus
 ) => {
-  const result = await prisma.posts.findMany({
+  const result = await db.posts.findMany({
     where: {
       authorId: userId,
       status: postType,
@@ -30,7 +53,7 @@ export const getPostUserByUserId = async (
 };
 
 export const getFeedPosts = async (postType?: PostStatus) => {
-  const result = await prisma.posts.findMany({
+  const result = await db.posts.findMany({
     where: {
       status: postType || "Public",
     },
@@ -47,7 +70,7 @@ export const getFeedPosts = async (postType?: PostStatus) => {
 };
 
 export const updateLikeStatus = async (postId: string, userId: string) => {
-  const result = await prisma.likePosts.findFirst({
+  const result = await db.likePosts.findFirst({
     where: {
       postId,
       userId,
@@ -62,7 +85,7 @@ export const updateLikeStatus = async (postId: string, userId: string) => {
 };
 
 export const likePost = async (postId: string, userId: string) => {
-  const result = await prisma.likePosts.create({
+  const result = await db.likePosts.create({
     data: {
       postId,
       userId,
@@ -72,11 +95,16 @@ export const likePost = async (postId: string, userId: string) => {
 };
 
 export const unLikePost = async (likePostId: string, userId: string) => {
-  const result = await prisma.likePosts.delete({
+  const result = await db.likePosts.delete({
     where: {
       id: likePostId,
       userId,
     },
   });
+  return result;
+};
+
+export const clearAllPost = async () => {
+  const result = await db.posts.deleteMany();
   return result;
 };

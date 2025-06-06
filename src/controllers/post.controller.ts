@@ -7,11 +7,13 @@ import {
   unLikePost,
   updateLikeStatus,
 } from "../services/post.service";
+import { uploadToImageKit } from "../utils/imageKit";
 
 interface PostControllerInput {
   request: Request & { user?: UserTypePayload };
   body: {
     content: string;
+    images: File[];
   };
 }
 
@@ -29,7 +31,24 @@ export const postController = {
       if (!userId) {
         throw new ErrorCustom("Unauthorized user", 401);
       }
-      const rawData = { content: body.content };
+
+      const uploadedImage = [];
+
+      for (let index = 0; index < body.images.length; index++) {
+        const uploadResult = await uploadToImageKit(
+          body.images[index],
+          "post-image"
+        );
+        if (uploadResult && !uploadResult.message) {
+          uploadedImage.push({
+            url: uploadResult.url || "",
+            fileId: uploadResult.fileId || "",
+            order: index,
+          });
+        }
+      }
+
+      const rawData = { content: body.content, images: uploadedImage };
       const newPost = await createNewPost(rawData, userId);
 
       if (!newPost) {

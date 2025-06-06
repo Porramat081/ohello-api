@@ -61,6 +61,9 @@ model Posts {
 
 model PostImage {
   id        String   @id @default(uuid()) @map("_id")
+  url       String
+  fileId    String
+  order     Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   posts     Posts    @relation(fields: [postsId], references: [id], onDelete: Cascade)
