@@ -13,7 +13,7 @@ interface PostControllerInput {
   request: Request & { user?: UserTypePayload };
   body: {
     content: string;
-    images: File[];
+    "images[]": File[] | File;
   };
 }
 
@@ -27,6 +27,7 @@ interface LikeControllerInput {
 export const postController = {
   createNewPost: async ({ request, body }: PostControllerInput) => {
     try {
+      const images = body["images[]"];
       const userId = request.user?.id;
       if (!userId) {
         throw new ErrorCustom("Unauthorized user", 401);
@@ -34,17 +35,33 @@ export const postController = {
 
       const uploadedImage = [];
 
-      for (let index = 0; index < body.images.length; index++) {
-        const uploadResult = await uploadToImageKit(
-          body.images[index],
-          "post-image"
-        );
-        if (uploadResult && !uploadResult.message) {
-          uploadedImage.push({
-            url: uploadResult.url || "",
-            fileId: uploadResult.fileId || "",
-            order: index,
-          });
+      if (images) {
+        if ((images as File[]).length && (images as File[]).length > 0) {
+          for (let index = 0; index < (images as File[]).length; index++) {
+            const uploadResult = await uploadToImageKit(
+              (images as File[])[index],
+              "post-image"
+            );
+            if (uploadResult && !uploadResult.message) {
+              uploadedImage.push({
+                url: uploadResult.url || "",
+                fileId: uploadResult.fileId || "",
+                order: index,
+              });
+            }
+          }
+        } else {
+          const uploadResult = await uploadToImageKit(
+            images as File,
+            "post-image"
+          );
+          if (uploadResult && !uploadResult.message) {
+            uploadedImage.push({
+              url: uploadResult.url || "",
+              fileId: uploadResult.fileId || "",
+              order: 0,
+            });
+          }
         }
       }
 
