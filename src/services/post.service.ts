@@ -64,6 +64,15 @@ export const getFeedPosts = async (postType?: PostStatus) => {
           surname: true,
         },
       },
+      images: {
+        select: {
+          url: true,
+          order: true,
+        },
+      },
+    },
+    orderBy: {
+      updatedAt: "desc",
     },
   });
   return result;
