@@ -24,7 +24,6 @@ export const userController = {
     try {
       const userId = request.user?.id;
       if (!userId) return;
-
       return {
         success: true,
         user: request.user,

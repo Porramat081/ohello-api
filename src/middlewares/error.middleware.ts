@@ -23,6 +23,7 @@ export class ErrorCustom extends Error {
 }
 
 export const errorHandle = ({ code, error, set }: ErrorHandleType) => {
+  console.error(error);
   switch (code) {
     case "P2002":
       if (error.meta?.target === "Users_email_key") {

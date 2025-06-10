@@ -1,6 +1,7 @@
 import { PostStatus, PrismaClient } from "@prisma/client";
 import { db } from "../utils/db";
 import { PostTypeInput } from "../../types/post";
+import { deleteFromImageKit } from "../utils/imageKit";
 
 interface ImageObj {
   url: string;
@@ -82,7 +83,8 @@ export const getFeedPosts = async (postType?: PostStatus) => {
 export const editPostService = async (
   userId: string,
   postId: string,
-  data: PostTypeInput
+  data: PostTypeInput,
+  deletedImageIds?: string[]
 ) => {
   const targetPost = await db.posts.findUnique({
     where: {
@@ -91,6 +93,7 @@ export const editPostService = async (
     },
     include: {
       author: true,
+      images: true,
     },
   });
 
@@ -100,12 +103,50 @@ export const editPostService = async (
     };
   }
 
-  const result = await db.posts.update({
-    where: {
-      id: postId,
-    },
-    data,
+  if (deletedImageIds?.length && deletedImageIds.length > 0) {
+    for (const deletedImageId of deletedImageIds) {
+      const imageToDelete = targetPost.images.find(
+        (image) => image.id === deletedImageId
+      );
+      if (imageToDelete) {
+        await deleteFromImageKit(imageToDelete.fileId);
+      }
+    }
+  }
+
+  // const result = await db.posts.update({
+  //   where: {
+  //     id: postId,
+  //   },
+  //   data,
+  // });
+
+  const result = await db.$transaction(async (prisma) => {
+    const updatedPost = await prisma.posts.update({
+      where: {
+        id: postId,
+      },
+      data: {
+        content: data.content,
+      },
+    });
+    if (data.images && data.images.length > 0) {
+      await Promise.all(
+        data.images.map((image, index) => {
+          return prisma.postImage.create({
+            data: {
+              url: image.url,
+              fileId: image.fileId,
+              order: Number(image.order),
+              postsId: postId,
+            },
+          });
+        })
+      );
+    }
+    return updatedPost;
   });
+
   return result;
 };
 

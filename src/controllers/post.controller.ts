@@ -1,3 +1,4 @@
+import { PostStatus } from "@prisma/client";
 import { PostTypeInput } from "../../types/post";
 import { UserTypePayload } from "../../types/user";
 import { ErrorCustom } from "../middlewares/error.middleware";
@@ -21,9 +22,12 @@ interface PostControllerInput {
 
 interface PostControllerUpdate {
   request: Request & { user?: UserTypePayload };
+  params: { postId: string };
   body: {
-    postId: string;
-    dataPost: PostTypeInput;
+    content?: string;
+    "images[]"?: File[] | File;
+    status?: PostStatus;
+    deletedImageIds?: string;
   };
 }
 
@@ -156,14 +160,55 @@ export const postController = {
       throw error;
     }
   },
-  editPost: async ({ request, body }: PostControllerUpdate) => {
+  editPost: async ({ request, body, params }: PostControllerUpdate) => {
     try {
+      const newImages = body["images[]"];
+      console.log(body);
+      const deletedImageIds: any[] = [];
       const userId = request.user?.id;
-      const { postId, dataPost } = body;
+
       if (!userId) {
         throw new ErrorCustom("Unauthorized user", 401);
       }
-      const result = await editPostService(userId, postId, dataPost);
+      const newUploadedImage = [];
+
+      if (newImages) {
+        if ((newImages as File[]).length && (newImages as File[]).length > 0) {
+          for (let index = 0; index < (newImages as File[]).length; index++) {
+            const uploadResult = await uploadToImageKit(
+              (newImages as File[])[index],
+              "post-image"
+            );
+            if (uploadResult && !uploadResult.message) {
+              newUploadedImage.push({
+                url: uploadResult.url || "",
+                fileId: uploadResult.fileId || "",
+                order: index,
+              });
+            }
+          }
+        } else {
+          const uploadResult = await uploadToImageKit(
+            newImages as File,
+            "post-image"
+          );
+          if (uploadResult && !uploadResult.message) {
+            newUploadedImage.push({
+              url: uploadResult.url || "",
+              fileId: uploadResult.fileId || "",
+              order: 0,
+            });
+          }
+        }
+      }
+
+      const rawData = { content: body.content, images: newUploadedImage };
+      const result = await editPostService(
+        userId,
+        params.postId,
+        rawData,
+        deletedImageIds
+      );
       if (!result) {
         return {
           success: false,
