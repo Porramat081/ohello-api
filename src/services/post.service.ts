@@ -1,5 +1,6 @@
 import { PostStatus, PrismaClient } from "@prisma/client";
 import { db } from "../utils/db";
+import { PostTypeInput } from "../../types/post";
 
 interface ImageObj {
   url: string;
@@ -74,6 +75,36 @@ export const getFeedPosts = async (postType?: PostStatus) => {
     orderBy: {
       updatedAt: "desc",
     },
+  });
+  return result;
+};
+
+export const editPostService = async (
+  userId: string,
+  postId: string,
+  data: PostTypeInput
+) => {
+  const targetPost = await db.posts.findUnique({
+    where: {
+      id: postId,
+      authorId: userId,
+    },
+    include: {
+      author: true,
+    },
+  });
+
+  if (!targetPost || targetPost.author.status !== "Active") {
+    return {
+      message: "User is not permitted",
+    };
+  }
+
+  const result = await db.posts.update({
+    where: {
+      id: postId,
+    },
+    data,
   });
   return result;
 };

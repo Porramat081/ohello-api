@@ -1,7 +1,9 @@
+import { PostTypeInput } from "../../types/post";
 import { UserTypePayload } from "../../types/user";
 import { ErrorCustom } from "../middlewares/error.middleware";
 import {
   createNewPost,
+  editPostService,
   getFeedPosts,
   getPostUserByUserId,
   unLikePost,
@@ -14,6 +16,14 @@ interface PostControllerInput {
   body: {
     content: string;
     "images[]": File[] | File;
+  };
+}
+
+interface PostControllerUpdate {
+  request: Request & { user?: UserTypePayload };
+  body: {
+    postId: string;
+    dataPost: PostTypeInput;
   };
 }
 
@@ -141,6 +151,31 @@ export const postController = {
       return {
         success: true,
         message: "Update like status post success",
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+  editPost: async ({ request, body }: PostControllerUpdate) => {
+    try {
+      const userId = request.user?.id;
+      const { postId, dataPost } = body;
+      if (!userId) {
+        throw new ErrorCustom("Unauthorized user", 401);
+      }
+      const result = await editPostService(userId, postId, dataPost);
+      if (!result) {
+        return {
+          success: false,
+          message: "Can't update this post",
+        };
+      }
+      if ((result as { message: string }).message) {
+        throw new ErrorCustom((result as { message: string }).message, 401);
+      }
+      return {
+        success: true,
+        message: "Update post successfully",
       };
     } catch (error) {
       throw error;
