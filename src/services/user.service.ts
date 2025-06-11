@@ -1,13 +1,15 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, UserStatus } from "@prisma/client";
 import { UserTypeInput } from "../../types/user";
 import { generateVerifyCode } from "../utils/email";
 import { db } from "../utils/db";
+import { isExceedTime } from "../utils/time";
 
 interface UserDataType {
   email?: string;
   verifyCode?: string;
   firstName?: string;
   surname?: string;
+  status?: UserStatus;
 }
 
 export const getUserData = async (userId: string) => {
@@ -79,4 +81,34 @@ export const updateUser = async (userId: string, data: UserDataType) => {
     data,
   });
   return updatedUser;
+};
+
+export const verifyUser = async (userId: string, verifyCode: string) => {
+  const user = await db.users.findUnique({
+    where: {
+      id: userId,
+      status: "Pending",
+    },
+    select: {
+      status: true,
+      verifyCode: true,
+      updatedAt: true,
+    },
+  });
+  if (isExceedTime(user?.updatedAt)) {
+    return { message: "verification expired , please re-send code" };
+  }
+
+  if (user?.verifyCode && user?.verifyCode === verifyCode) {
+    const res = await updateUser(userId, { status: "Active" });
+    return {
+      email: res.email,
+      firstName: res.firstName,
+      surname: res.surname,
+      id: res.id,
+      status: res.status,
+      varifyCode: res.verifyCode,
+    };
+  }
+  return { message: "code incorrect" };
 };

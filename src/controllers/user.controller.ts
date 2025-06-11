@@ -6,6 +6,7 @@ import {
   getUserData,
   getVerify,
   updateUser,
+  verifyUser,
 } from "../services/user.service";
 import { compare, hash } from "bcryptjs";
 import { convertToLocalTime, isExceedTime } from "../utils/time";
@@ -15,6 +16,13 @@ import { generateVerifyCode } from "../utils/email";
 export interface UserControllerInput {
   request: Request & { user?: UserTypePayload };
   body: UserTypeInput;
+  jwt: any;
+  cookie: any;
+}
+
+interface UserControllerVerifyInput {
+  request: Request & { user?: UserTypePayload };
+  body: { verifyCode: string };
   jwt: any;
   cookie: any;
 }
@@ -78,20 +86,6 @@ export const userController = {
       throw error;
     }
   },
-  sendingVerifyCode: async ({ request }: UserControllerInput) => {
-    try {
-      const userId = request.user?.id;
-      if (!userId) {
-        return;
-      }
-      const user = await getUserData(userId);
-      return { user };
-      // if(){}
-      // const result = await
-    } catch (error) {
-      throw error;
-    }
-  },
   getTimeVerify: async ({ request }: UserControllerInput) => {
     try {
       const user = request.user;
@@ -142,23 +136,87 @@ export const userController = {
         surname: updatedUser.surname,
       });
 
-      return result;
+      if (result) {
+        return {
+          success: true,
+          message: "Resend code successfullty",
+          updatedAt: updatedUser.updatedAt,
+        };
+      }
+      return {
+        success: false,
+        message: "Resend code fail",
+      };
     } catch (error) {
       throw error;
     }
   },
-  testSignIn: async ({ jwt, body, cookie: { ckTkOhello } }: any) => {
+  verifyUser: async ({
+    jwt,
+    cookie: { ckTkOhello },
+    request,
+    body,
+  }: UserControllerVerifyInput) => {
+    try {
+      const user = request.user;
+      const { verifyCode } = body;
+      if (!user || user.status !== "Pending") {
+        throw new ErrorCustom("User unauthorized", 401);
+      }
+      const result = await verifyUser(user.id, verifyCode);
+      if ((result as { message: string }).message) {
+        return {
+          success: false,
+          message: (result as { message: string }).message,
+        };
+      }
+      const token = await jwt.sign(result);
+      ckTkOhello.set({
+        value: token,
+        httpOnly: true,
+        // domain:'http://localhost:',
+        // path: "/api/user",
+        maxAge: 24 * 2 * 60 * 60,
+        secure: true,
+      });
+      return {
+        success: true,
+        message: "Verify user successfully",
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+  signIn: async ({ jwt, body, cookie: { ckTkOhello } }: any) => {
     try {
       const { email, password } = body;
       const user = await getUserByLogin(email, password);
-      if (!user)
-        return {
-          success: false,
-          message: "Not found email user",
-        };
+      if (!user) {
+        throw new ErrorCustom(
+          "Email or Password is not correct",
+          400,
+          "CUSTOM_ERROR",
+          {
+            email: ["this email may not correct"],
+            password: ["this password may not correct"],
+          }
+        );
+      }
+      // return {
+      //   success: false,
+      //   message: "Not found email user",
+      // };
       const isCorrectPassword = await compare(password, user?.password);
       if (!isCorrectPassword) {
-        throw new ErrorCustom("Password is not correct", 400);
+        throw new ErrorCustom(
+          "Email or Password is not correct",
+          400,
+          "CUSTOM_ERROR",
+          {
+            email: ["this email may not correct"],
+            password: ["this password may not correct"],
+          }
+        );
       }
 
       const payload = {

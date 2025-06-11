@@ -4,14 +4,14 @@ export const generateVerifyEmail = (
   verifyCode: string,
   verifyLink: string
 ) => {
-  return ` <div style="display: flex; flex-direction: column; align-items: center; font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;">
-      <h1>Verify Your Email : ${userEmail}</h1>
-      <h2>Welcome to Ohello</h2>
+  return `<div style="font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;">
+      <h1 style="text-align:center">Verify Your Email : ${userEmail}</h1>
+      <h2 style="text-align:center">Welcome to Ohello</h2>
       <p style="font-size: 18px;">
-        We're glad you're here <span style="font-size: 20px; font-weight: 700;">${nameUser}</span> !<br /><div
-          style="font-size: 30px; font-weight: 800;"
-          >${verifyCode}</div
-        ><br />
+        We're glad you're here <span style="font-size: 20px; font-weight: 700;">${nameUser}</span> !
+		<br>
+<div style="font-size: 30px; font-weight: 800;">${verifyCode}</div>
+<br>
         To continue, please enter the following verification code in the
         website: <a href="${verifyLink}">Verification Link!</a>
       </p>
@@ -19,7 +19,9 @@ export const generateVerifyEmail = (
         This code will expire in <span style="font-size: 20px;font-weight: 700;color: red;">10 minutes</span>. If you didn’t request this, you can
         safely ignore this email.
       </p>
-      <div>&copy; 2025 Ohello. All rights reserved.</div>`;
+      <div>&copy; 2025 Ohello. All rights reserved.</div>
+      </div>
+      `;
 };
 
 export const generateVerifyCode = () => {
