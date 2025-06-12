@@ -1,9 +1,10 @@
 import { UserTypePayload } from "../../types/user";
 import { ErrorCustom } from "../middlewares/error.middleware";
-import { getFriendService } from "../services/friend.service";
+import { addFriendRequest, getFriendService } from "../services/friend.service";
 
 interface FriendControllerType {
   request: Request & { user?: UserTypePayload };
+  params?: { targetId: string };
 }
 
 export const friendController = {
@@ -24,6 +25,27 @@ export const friendController = {
       return {
         success: false,
         message: "Get friends fail",
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+  addFriend: async ({ request, params }: FriendControllerType) => {
+    try {
+      const user = request.user;
+      if (!user || user.status !== "Active") {
+        throw new ErrorCustom("User unauthorized", 401);
+      }
+      const result = await addFriendRequest(user.id, params?.targetId || "");
+      if (!result || (result as { message: string }).message) {
+        throw new ErrorCustom(
+          (result as { message: string }).message || "send request fail",
+          400
+        );
+      }
+      return {
+        success: true,
+        message: "add friend success",
       };
     } catch (error) {
       throw error;
