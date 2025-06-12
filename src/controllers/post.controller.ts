@@ -42,8 +42,8 @@ export const postController = {
   createNewPost: async ({ request, body }: PostControllerInput) => {
     try {
       const images = body["images[]"];
-      const userId = request.user?.id;
-      if (!userId) {
+      const user = request.user;
+      if (!user || user?.status !== "Active") {
         throw new ErrorCustom("Unauthorized user", 401);
       }
 
@@ -80,7 +80,7 @@ export const postController = {
       }
 
       const rawData = { content: body.content, images: uploadedImage };
-      const newPost = await createNewPost(rawData, userId);
+      const newPost = await createNewPost(rawData, user.id);
 
       if (!newPost) {
         return {
@@ -112,11 +112,11 @@ export const postController = {
   },
   getUserPost: async ({ request }: PostControllerInput) => {
     try {
-      const userId = request.user?.id;
-      if (!userId) {
+      const user = request.user;
+      if (!user || user?.status !== "Active") {
         throw new ErrorCustom("Unauthorized user", 401);
       }
-      const posts = await getPostUserByUserId(userId);
+      const posts = await getPostUserByUserId(user.id);
       if (!posts.length || posts.length <= 0) {
         return {
           success: false,
@@ -134,17 +134,17 @@ export const postController = {
   },
   likeOrUnlikePost: async ({ request, body }: LikeControllerInput) => {
     try {
-      const userId = request.user?.id;
+      const user = request.user;
       const { postId } = body;
-      if (!userId) {
+      if (!user || user.status !== "Active") {
         throw new ErrorCustom("Unauthorized user", 401);
       }
-      const targetPost = await getPostUserByUserId(userId);
+      const targetPost = await getPostUserByUserId(user.id);
       if (!targetPost) {
         throw new ErrorCustom("Post not found", 404);
       }
 
-      const result = await updateLikeStatus(postId, userId);
+      const result = await updateLikeStatus(postId, user.id);
 
       if (!result) {
         return {
@@ -163,11 +163,10 @@ export const postController = {
   editPost: async ({ request, body, params }: PostControllerUpdate) => {
     try {
       const newImages = body["images[]"];
-      console.log(body);
       const deletedImageIds: any[] = [];
-      const userId = request.user?.id;
+      const user = request.user;
 
-      if (!userId) {
+      if (!user || user.status !== "Active") {
         throw new ErrorCustom("Unauthorized user", 401);
       }
       const newUploadedImage = [];
@@ -204,7 +203,7 @@ export const postController = {
 
       const rawData = { content: body.content, images: newUploadedImage };
       const result = await editPostService(
-        userId,
+        user.id,
         params.postId,
         rawData,
         deletedImageIds

@@ -7,6 +7,13 @@ export const getFriendService = async (userId: string) => {
         id: userId,
       },
     },
+    select: {
+      username: true,
+      firstName: true,
+      surname: true,
+      profilePicUrl: true,
+      createdAt: true,
+    },
   });
   return friends;
 };

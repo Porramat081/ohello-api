@@ -27,12 +27,19 @@ enum PostStatus {
   FriendOnly
 }
 
+enum FriendStatus {
+  Pending
+  Accept
+  Block
+}
+
 model Users {
   id            String      @id @default(uuid()) @map("_id")
   firstName     String
   surname       String
   email         String      @unique
   password      String
+  username      String?
   status        UserStatus  @default(Pending)
   verifyCode    String?
   profilePicUrl String?
@@ -40,6 +47,9 @@ model Users {
   updatedAt     DateTime    @updatedAt
   Posts         Posts[]
   likePosts     LikePosts[]
+
+  FriendsRecieved Friends[] @relation("RequestingUser")
+  FriendsRequest  Friends[] @relation("ReceivingUser")
 }
 
 model Posts {
@@ -80,4 +90,13 @@ model LikePosts {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Friends {
+  id           String       @id @default(uuid()) @map("_id")
+  requestId    String
+  recievedId   String
+  userRequest  Users        @relation("RequestingUser", fields: [requestId], references: [id], onDelete: Cascade)
+  userRecieved Users        @relation("ReceivingUser", fields: [recievedId], references: [id], onDelete: Cascade)
+  status       FriendStatus @default(Pending)
 }

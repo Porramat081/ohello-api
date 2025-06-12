@@ -89,7 +89,7 @@ export const userController = {
   getTimeVerify: async ({ request }: UserControllerInput) => {
     try {
       const user = request.user;
-      if (!user) {
+      if (!user || user.status !== "Pending") {
         throw new ErrorCustom("user is unauthorized", 401);
       }
       const verifyObj = await getVerify(user.id);
@@ -106,7 +106,7 @@ export const userController = {
   getCodeVerify: async ({ request }: UserControllerInput) => {
     try {
       const user = request.user;
-      if (!user) {
+      if (!user || user.status !== "Pending") {
         throw new ErrorCustom("user is unauthorized", 401);
       }
       const verifyObj = await getVerify(user.id);
