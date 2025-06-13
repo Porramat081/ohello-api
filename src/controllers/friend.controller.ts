@@ -1,21 +1,28 @@
 import { UserTypePayload } from "../../types/user";
 import { ErrorCustom } from "../middlewares/error.middleware";
-import { addFriendRequest, getFriendService } from "../services/friend.service";
+import {
+  addFriendRequest,
+  changeFriendStatus,
+  deleteFriend,
+  getFriendService,
+} from "../services/friend.service";
 
 interface FriendControllerType {
   request: Request & { user?: UserTypePayload };
-  params?: { targetId: string };
+  params?: { cat: string };
+  body?: { targetId: string } | { friendId: string };
 }
 
 export const friendController = {
-  getFriends: async ({ request }: FriendControllerType) => {
+  getFriends: async ({ request, params }: FriendControllerType) => {
     try {
       const userId = request.user?.id;
+      const cat = params?.cat || "Suggest Friends";
       const userStatus = request.user?.status;
       if (!userId || userStatus !== "Active") {
         throw new ErrorCustom("unauthorized user", 401);
       }
-      const result = await getFriendService(userId);
+      const result = await getFriendService(userId, cat);
       if (result) {
         return {
           success: true,
@@ -30,13 +37,17 @@ export const friendController = {
       throw error;
     }
   },
-  addFriend: async ({ request, params }: FriendControllerType) => {
+  addFriend: async ({ request, body }: FriendControllerType) => {
     try {
       const user = request.user;
-      if (!user || user.status !== "Active") {
+      const targetId = (body as { targetId: string }).targetId;
+      if (!user || user.status !== "Active" || user.id === targetId) {
         throw new ErrorCustom("User unauthorized", 401);
       }
-      const result = await addFriendRequest(user.id, params?.targetId || "");
+      if (!targetId) {
+        throw new ErrorCustom("Not found friend user", 404);
+      }
+      const result = await addFriendRequest(user.id, targetId);
       if (!result || (result as { message: string }).message) {
         throw new ErrorCustom(
           (result as { message: string }).message || "send request fail",
@@ -46,6 +57,72 @@ export const friendController = {
       return {
         success: true,
         message: "add friend success",
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+  acceptFriend: async ({ request, body }: FriendControllerType) => {
+    try {
+      const user = request.user;
+      const friendId = (body as { friendId: string }).friendId;
+      if (!user) {
+        throw new ErrorCustom("User unauthorized", 401);
+      }
+      if (!friendId) {
+        throw new ErrorCustom("Not friend request", 404);
+      }
+      const result = await changeFriendStatus(friendId, "Accept");
+      if (!result) {
+        throw new ErrorCustom("Accept Friend Failure", 401);
+      }
+      return {
+        success: true,
+        message: "Accept Friend success",
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+  blockFriend: async ({ request, body }: FriendControllerType) => {
+    try {
+      const user = request.user;
+      const friendId = (body as { friendId: string }).friendId;
+      if (!user) {
+        throw new ErrorCustom("User unauthorized", 401);
+      }
+      if (!friendId) {
+        throw new ErrorCustom("Not friend request", 404);
+      }
+      const result = await changeFriendStatus(friendId, "Block");
+      if (!result) {
+        throw new ErrorCustom("Block friend fail", 401);
+      }
+      return {
+        success: true,
+        message: "Block friend success",
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+  cancelFriend: async ({ request, body }: FriendControllerType) => {
+    try {
+      const user = request.user;
+      const friendId = (body as { friendId: string }).friendId;
+      if (!user) {
+        throw new ErrorCustom("User unauthorized", 401);
+      }
+      if (!friendId) {
+        throw new ErrorCustom("Not friend request", 404);
+      }
+      const result = await deleteFriend(user.id, friendId);
+      if (!result) {
+        throw new ErrorCustom("Delete friend fail", 401);
+      }
+      return {
+        success: true,
+        message: "Delete friend success",
       };
     } catch (error) {
       throw error;

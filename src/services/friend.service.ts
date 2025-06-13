@@ -1,7 +1,7 @@
 import { FriendStatus } from "@prisma/client";
 import { db } from "../utils/db";
 
-export const getFriendService = async (userId: string) => {
+export const getFriendService = async (userId: string, cat: string) => {
   const friends = await db.users.findMany({
     where: {
       NOT: {
@@ -14,6 +14,8 @@ export const getFriendService = async (userId: string) => {
       surname: true,
       profilePicUrl: true,
       createdAt: true,
+      FriendsRecieved: true,
+      FriendsRequest: true,
     },
   });
   return friends;
@@ -64,4 +66,20 @@ export const changeFriendStatus = async (
     },
   });
   return updateFriend;
+};
+
+export const deleteFriend = async (userId: string, friendId: string) => {
+  const result = await db.friends.deleteMany({
+    where: {
+      OR: [
+        {
+          AND: [{ id: friendId }, { recievedId: userId }],
+        },
+        {
+          AND: [{ id: friendId }, { requestId: userId }],
+        },
+      ],
+    },
+  });
+  return result;
 };
