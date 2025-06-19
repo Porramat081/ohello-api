@@ -1,4 +1,4 @@
-import Elysia from "elysia";
+import Elysia, { t } from "elysia";
 
 import cors from "@elysiajs/cors";
 import jwt from "@elysiajs/jwt";
@@ -9,7 +9,6 @@ import { checkSignIn } from "./middlewares/auth.middleware";
 import { errorHandle } from "./middlewares/error.middleware";
 import postRoute from "./routes/post.route";
 import friendRoute from "./routes/friend.route";
-import { transCookie } from "./utils/transCookies";
 
 const app = new Elysia()
   .onError(errorHandle)
@@ -31,21 +30,21 @@ const app = new Elysia()
   .use(userRoute)
   .use(postRoute)
   .use(friendRoute)
-  .ws("/wsMessage", {
-    async message(ws, data) {
-      console.log(ws.data.jwt);
-      const user = await transCookie(
-        ws.data.cookie.ckTkOhello.value || "",
-        ws.data.jwt
-      );
-      console.log(user);
-      ws.send((data as { message: string }).message);
-    },
+  .ws("/wsMessage/:roomId", {
     open(ws) {
-      console.log("WebSocket connection opened");
+      const roomId = ws.data.params.roomId;
+      ws.subscribe(roomId);
+      console.log(`Client joined room : ${ws.data.params.roomId}`);
+    },
+    message(ws, message) {
+      const roomId = ws.data.params.roomId;
+      console.log(message);
+      console.log(roomId);
+      ws.publish(roomId, message);
+      ws.send(message);
     },
     close(ws) {
-      console.log("WebSocket connection closed");
+      console.log(`Client left room : ${ws.data.params.roomId}`);
     },
   })
   .listen(env.PORT || 3001);

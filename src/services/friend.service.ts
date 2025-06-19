@@ -1,15 +1,15 @@
 import { FriendStatus } from "@prisma/client";
 import { db } from "../utils/db";
 
-export const getFriendService = async (userId: string, cat: string) => {
+export const getFriendService = async (userId: string) => {
   const friends = await db.users.findMany({
     where: {
       NOT: {
         id: userId,
       },
+      status: "Active",
     },
     select: {
-      username: true,
       firstName: true,
       surname: true,
       profilePicUrl: true,
@@ -19,6 +19,65 @@ export const getFriendService = async (userId: string, cat: string) => {
     },
   });
   return friends;
+};
+
+export const getCount = async (userId: string) => {
+  const yourFriend = await db.friends.findMany({
+    where: {
+      OR: [{ requestId: userId }, { recievedId: userId }],
+      userRecieved: {
+        status: "Active",
+        // NOT: {
+        //   id: userId,
+        // },
+      },
+      userRequest: {
+        status: "Active",
+        // NOT: {
+        //   id: userId,
+        // },
+      },
+    },
+    include: {
+      userRecieved: {
+        select: {
+          id: true,
+          email: true,
+        },
+      },
+      userRequest: {
+        select: {
+          id: true,
+          email: true,
+        },
+      },
+    },
+  });
+  return {
+    yourFriendCount: yourFriend.filter((item) => item.status === "Accept")
+      .length,
+    yourRequestCount: yourFriend.filter(
+      (item) => item.status === "Pending" && item.requestId === userId
+    ).length,
+    yourReceiveCount: yourFriend.filter(
+      (item) => item.status === "Pending" && item.recievedId === userId
+    ).length,
+    yourBlockCount: yourFriend.filter((item) => item.status === "Block").length,
+  };
+};
+
+export const getAllFriend = async (userId: string) => {
+  const allFriend = await db.users.findMany({
+    where: { NOT: { id: userId }, status: "Active" },
+    select: {
+      id: true,
+      email: true,
+      status: true,
+      FriendsRecieved: true,
+      FriendsRequest: true,
+    },
+  });
+  return allFriend;
 };
 
 export const addFriendRequest = async (

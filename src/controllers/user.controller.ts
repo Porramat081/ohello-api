@@ -37,7 +37,7 @@ export const userController = {
         user: request.user,
       };
     } catch (error) {
-      return error;
+      throw error;
     }
   },
   createUser: async ({

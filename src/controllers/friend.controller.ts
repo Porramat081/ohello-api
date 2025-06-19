@@ -4,6 +4,8 @@ import {
   addFriendRequest,
   changeFriendStatus,
   deleteFriend,
+  getAllFriend,
+  getCount,
   getFriendService,
 } from "../services/friend.service";
 
@@ -22,11 +24,32 @@ export const friendController = {
       if (!userId || userStatus !== "Active") {
         throw new ErrorCustom("unauthorized user", 401);
       }
-      const result = await getFriendService(userId, cat);
-      if (result) {
+      const result = await getFriendService(userId);
+      //console.log(result);
+      const suggestFriend = result.filter((item) => {
+        return (
+          !Boolean(
+            item.FriendsRecieved.find(
+              (item2) =>
+                item2.recievedId === userId || item2.requestId === userId
+            )
+          ) &&
+          !Boolean(
+            item.FriendsRequest.find(
+              (item2) =>
+                item2.requestId === userId || item2.recievedId === userId
+            )
+          )
+        );
+      });
+
+      const countFriend = await getCount(userId);
+
+      if (suggestFriend) {
         return {
           success: true,
-          friends: result,
+          friends: suggestFriend,
+          countFriend,
         };
       }
       return {
