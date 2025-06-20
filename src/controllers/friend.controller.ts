@@ -48,8 +48,13 @@ export const friendController = {
       if (suggestFriend) {
         return {
           success: true,
-          friends: suggestFriend,
-          countFriend,
+          friends: suggestFriend.map((item) => ({
+            firstName: item.firstName,
+            surname: item.surname,
+            profilePicUrl: item.profilePicUrl,
+            updatedAt: item.updatedAt,
+          })),
+          ...countFriend,
         };
       }
       return {

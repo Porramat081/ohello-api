@@ -13,7 +13,7 @@ export const getFriendService = async (userId: string) => {
       firstName: true,
       surname: true,
       profilePicUrl: true,
-      createdAt: true,
+      updatedAt: true,
       FriendsRecieved: true,
       FriendsRequest: true,
     },
@@ -27,42 +27,77 @@ export const getCount = async (userId: string) => {
       OR: [{ requestId: userId }, { recievedId: userId }],
       userRecieved: {
         status: "Active",
-        // NOT: {
-        //   id: userId,
-        // },
       },
       userRequest: {
         status: "Active",
-        // NOT: {
-        //   id: userId,
-        // },
       },
     },
-    include: {
+    select: {
+      status: true,
+      recievedId: true,
+      requestId: true,
+      updatedAt: true,
       userRecieved: {
         select: {
-          id: true,
-          email: true,
+          firstName: true,
+          surname: true,
+          profilePicUrl: true,
         },
       },
       userRequest: {
         select: {
-          id: true,
-          email: true,
+          firstName: true,
+          surname: true,
+          profilePicUrl: true,
         },
       },
     },
   });
   return {
-    yourFriendCount: yourFriend.filter((item) => item.status === "Accept")
-      .length,
-    yourRequestCount: yourFriend.filter(
-      (item) => item.status === "Pending" && item.requestId === userId
-    ).length,
-    yourReceiveCount: yourFriend.filter(
-      (item) => item.status === "Pending" && item.recievedId === userId
-    ).length,
-    yourBlockCount: yourFriend.filter((item) => item.status === "Block").length,
+    yourFriend: yourFriend
+      .map((item) => {
+        if (item.status === "Accept") {
+          if (item.requestId === userId) {
+            return item.userRecieved;
+          } else {
+            return item.userRequest;
+          }
+        }
+      })
+      .filter((item) => item),
+    yourRequest: yourFriend
+      .map((item) => {
+        if (item.status === "Pending" && item.requestId === userId) {
+          if (item.requestId === userId) {
+            return item.userRecieved;
+          } else {
+            return item.userRequest;
+          }
+        }
+      })
+      .filter((item) => item),
+    yourReceive: yourFriend
+      .map((item) => {
+        if (item.status === "Pending" && item.recievedId === userId) {
+          if (item.requestId === userId) {
+            return item.userRecieved;
+          } else {
+            return item.userRequest;
+          }
+        }
+      })
+      .filter((item) => item),
+    yourBlock: yourFriend
+      .map((item) => {
+        if (item.status === "Block") {
+          if (item.requestId === userId) {
+            return item.userRecieved;
+          } else {
+            return item.userRequest;
+          }
+        }
+      })
+      .filter((item) => item),
   };
 };
 
