@@ -50,6 +50,10 @@ model Users {
 
   FriendsRecieved Friends[] @relation("ReceivingUser")
   FriendsRequest  Friends[] @relation("RequestingUser")
+
+  StartChatRoom ChatRoom[] @relation("UserMember1")
+
+  DestChatRoom ChatRoom[] @relation("UserMember2")
 }
 
 model Posts {
@@ -101,4 +105,25 @@ model Friends {
   status       FriendStatus @default(Pending)
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
+}
+
+model ChatRoom {
+  id          String   @id @default(uuid()) @map("_id")
+  memberId1   String
+  memberId2   String
+  userMember1 Users    @relation("UserMember1", fields: [memberId1], references: [id], onDelete: Cascade)
+  userMember2 Users    @relation("UserMember2", fields: [memberId2], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  Message Message[]
+}
+
+model Message {
+  id          String   @id @default(uuid()) @map("_id")
+  chatRoomId  String
+  content     String
+  ChatRoomOwn ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

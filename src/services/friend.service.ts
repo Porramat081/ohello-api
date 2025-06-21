@@ -68,22 +68,14 @@ export const getCount = async (userId: string) => {
     yourRequest: yourFriend
       .map((item) => {
         if (item.status === "Pending" && item.requestId === userId) {
-          if (item.requestId === userId) {
-            return item.userRecieved;
-          } else {
-            return item.userRequest;
-          }
+          return { ...item.userRecieved, youRequest: true };
         }
       })
       .filter((item) => item),
     yourReceive: yourFriend
       .map((item) => {
         if (item.status === "Pending" && item.recievedId === userId) {
-          if (item.requestId === userId) {
-            return item.userRecieved;
-          } else {
-            return item.userRequest;
-          }
+          return { ...item.userRecieved, youRequest: false };
         }
       })
       .filter((item) => item),

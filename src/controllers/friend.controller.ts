@@ -16,10 +16,9 @@ interface FriendControllerType {
 }
 
 export const friendController = {
-  getFriends: async ({ request, params }: FriendControllerType) => {
+  getFriends: async ({ request }: FriendControllerType) => {
     try {
       const userId = request.user?.id;
-      const cat = params?.cat || "Suggest Friends";
       const userStatus = request.user?.status;
       if (!userId || userStatus !== "Active") {
         throw new ErrorCustom("unauthorized user", 401);

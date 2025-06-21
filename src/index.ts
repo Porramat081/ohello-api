@@ -9,6 +9,7 @@ import { checkSignIn } from "./middlewares/auth.middleware";
 import { errorHandle } from "./middlewares/error.middleware";
 import postRoute from "./routes/post.route";
 import friendRoute from "./routes/friend.route";
+import messageRoute from "./routes/message.route";
 
 const app = new Elysia()
   .onError(errorHandle)
@@ -30,6 +31,7 @@ const app = new Elysia()
   .use(userRoute)
   .use(postRoute)
   .use(friendRoute)
+  .use(messageRoute)
   .ws("/wsMessage/:roomId", {
     open(ws) {
       const roomId = ws.data.params.roomId;
