@@ -12,26 +12,27 @@ import { compare, hash } from "bcryptjs";
 import { convertToLocalTime, isExceedTime } from "../utils/time";
 import { sendVerifyCode } from "../services/email.service";
 import { generateVerifyCode } from "../utils/email";
+import { env } from "bun";
 
 export interface UserControllerInput {
   request: Request & { user?: UserTypePayload };
-  body: UserTypeInput;
+  body: UserTypeInput | { verifyCode: string };
   jwt: any;
-  cookie: any;
-}
-
-interface UserControllerVerifyInput {
-  request: Request & { user?: UserTypePayload };
-  body: { verifyCode: string };
-  jwt: any;
-  cookie: any;
+  cookie: {
+    [key: string]: {
+      value: string;
+      set: (obj: any) => void;
+    };
+  };
 }
 
 export const userController = {
   getUser: async ({ request }: UserControllerInput) => {
     try {
       const userId = request.user?.id;
-      if (!userId) return;
+      if (!userId) {
+        return { success: false };
+      }
       return {
         success: true,
         user: request.user,
@@ -40,13 +41,9 @@ export const userController = {
       throw error;
     }
   },
-  createUser: async ({
-    body,
-    jwt,
-    cookie: { ckTkOhello },
-  }: UserControllerInput) => {
+  createUser: async ({ body, jwt, cookie }: UserControllerInput) => {
     try {
-      const { firstName, surname, email, password } = body;
+      const { firstName, surname, email, password } = body as UserTypeInput;
       const hashPassword = await hash(password, 10);
       const result = await createUser({
         firstName,
@@ -57,14 +54,16 @@ export const userController = {
 
       if (result) {
         const token = await jwt.sign(result);
-        ckTkOhello.set({
-          value: token,
-          httpOnly: true,
-          // domain:'http://localhost:',
-          // path: "/api/user",
-          maxAge: 24 * 2 * 60 * 60,
-          secure: true,
-        });
+        if (env.COOKIES_NAME) {
+          cookie[env.COOKIES_NAME].set({
+            value: token,
+            httpOnly: true,
+            // domain:'http://localhost:',
+            // path: "/api/user",
+            maxAge: 24 * 2 * 60 * 60,
+            secure: true,
+          });
+        }
 
         await sendVerifyCode({
           email: result.email,
@@ -151,15 +150,10 @@ export const userController = {
       throw error;
     }
   },
-  verifyUser: async ({
-    jwt,
-    cookie: { ckTkOhello },
-    request,
-    body,
-  }: UserControllerVerifyInput) => {
+  verifyUser: async ({ jwt, cookie, request, body }: UserControllerInput) => {
     try {
       const user = request.user;
-      const { verifyCode } = body;
+      const { verifyCode } = body as { verifyCode: string };
       if (!user || user.status !== "Pending") {
         throw new ErrorCustom("User unauthorized", 401);
       }
@@ -171,14 +165,16 @@ export const userController = {
         };
       }
       const token = await jwt.sign(result);
-      ckTkOhello.set({
-        value: token,
-        httpOnly: true,
-        // domain:'http://localhost:',
-        // path: "/api/user",
-        maxAge: 24 * 2 * 60 * 60,
-        secure: true,
-      });
+      if (env.COOKIES_NAME) {
+        cookie[env.COOKIES_NAME].set({
+          value: token,
+          httpOnly: true,
+          // domain:'http://localhost:',
+          // path: "/api/user",
+          maxAge: 24 * 2 * 60 * 60,
+          secure: true,
+        });
+      }
       return {
         success: true,
         message: "Verify user successfully",
@@ -242,20 +238,28 @@ export const userController = {
       throw error;
     }
   },
-  signout: async ({ cookie: { ckTkOhello } }: UserControllerInput) => {
+  signout: async ({
+    cookie,
+  }: {
+    cookie: {
+      [key: string]: { remove: () => any };
+    };
+  }) => {
     try {
-      const result = ckTkOhello.remove();
-      if (result) {
+      if (env.COOKIES_NAME) {
+        const result = cookie[env.COOKIES_NAME].remove();
+        if (result) {
+          return {
+            success: true,
+            result,
+            message: "Log out successful",
+          };
+        }
         return {
-          success: true,
-          result,
-          message: "Log out successful",
+          success: false,
+          message: "Log out unsuccessful , please try again later",
         };
       }
-      return {
-        success: false,
-        message: "Log out unsuccessful , please try again later",
-      };
     } catch (error) {
       throw error;
     }

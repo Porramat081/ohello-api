@@ -1,25 +1,32 @@
+import { env } from "bun";
 import { UserTypePayload } from "../../types/user";
 
-interface CheckSignInType {
+export interface CheckSignInType {
   jwt: {
     verify: (token: string) => Promise<{}>;
   };
   request: Request & { user?: UserTypePayload };
-  cookie: any;
+  cookie: {
+    [key: string]: {
+      value: string | undefined;
+    };
+  };
 }
 
 export const checkSignIn = async ({
   jwt,
   request,
-  cookie: { ckTkOhello },
+  cookie,
 }: CheckSignInType) => {
-  const token = ckTkOhello.value;
+  if (env.COOKIES_NAME) {
+    const token = cookie[env.COOKIES_NAME].value;
 
-  if (token) {
-    const payload = (await jwt.verify(token)) as UserTypePayload;
-    // if (payload.status === "Active") {
-    //   request.user = payload;
-    // }
-    request.user = payload;
+    if (token) {
+      const payload = (await jwt.verify(token)) as UserTypePayload;
+      // if (payload.status === "Active") {
+      //   request.user = payload;
+      // }
+      request.user = payload;
+    }
   }
 };

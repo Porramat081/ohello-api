@@ -54,6 +54,7 @@ model Users {
   StartChatRoom ChatRoom[] @relation("UserMember1")
 
   DestChatRoom ChatRoom[] @relation("UserMember2")
+  Message      Message[]
 }
 
 model Posts {
@@ -126,4 +127,6 @@ model Message {
   ChatRoomOwn ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  writerId    String
+  WriterUser  Users    @relation(fields: [writerId], references: [id], onDelete: Cascade)
 }

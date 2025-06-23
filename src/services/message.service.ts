@@ -28,7 +28,8 @@ export const createNewChatRoom = async (
 
 export const searchChatRoomByMember = async (
   memberId1: string,
-  memberId2: string
+  memberId2: string,
+  isGetting?: boolean
 ) => {
   const chatRoom = await db.chatRoom.findFirst({
     where: {
@@ -37,6 +38,43 @@ export const searchChatRoomByMember = async (
         { AND: [{ memberId1: memberId2 }, { memberId2: memberId1 }] },
       ],
     },
+    select: {
+      id: true,
+      Message: isGetting,
+      userMember2: {
+        select: {
+          id: true,
+          firstName: true,
+          surname: true,
+          profilePicUrl: true,
+          FriendsRequest: {
+            where: {
+              AND: [{ recievedId: memberId1 }, { requestId: memberId2 }],
+            },
+          },
+          FriendsRecieved: {
+            where: {
+              AND: [{ recievedId: memberId2 }, { requestId: memberId1 }],
+            },
+          },
+        },
+      },
+    },
   });
   return chatRoom;
+};
+
+export const createNewMessage = async (
+  userId: string,
+  roomId: string,
+  content: string
+) => {
+  const newMessage = await db.message.create({
+    data: {
+      chatRoomId: roomId,
+      content: content,
+      writerId: userId,
+    },
+  });
+  return newMessage;
 };

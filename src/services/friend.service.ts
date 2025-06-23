@@ -39,6 +39,7 @@ export const getCount = async (userId: string) => {
       updatedAt: true,
       userRecieved: {
         select: {
+          id: true,
           firstName: true,
           surname: true,
           profilePicUrl: true,
@@ -46,6 +47,7 @@ export const getCount = async (userId: string) => {
       },
       userRequest: {
         select: {
+          id: true,
           firstName: true,
           surname: true,
           profilePicUrl: true,
