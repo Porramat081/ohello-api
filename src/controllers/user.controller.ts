@@ -1,11 +1,17 @@
-import { UserTypeInput, UserTypePayload } from "../../types/user";
+import {
+  UpdateUserType,
+  UserTypeInput,
+  UserTypePayload,
+} from "../../types/user";
 import { ErrorCustom } from "../middlewares/error.middleware";
 import {
   createUser,
+  getUserById,
   getUserByLogin,
   getUserData,
   getVerify,
   updateUser,
+  updateUserPicture,
   verifyUser,
 } from "../services/user.service";
 import { compare, hash } from "bcryptjs";
@@ -13,6 +19,7 @@ import { convertToLocalTime, isExceedTime } from "../utils/time";
 import { sendVerifyCode } from "../services/email.service";
 import { generateVerifyCode } from "../utils/email";
 import { env } from "bun";
+import { deleteFromImageKit, uploadToImageKit } from "../utils/imageKit";
 
 export interface UserControllerInput {
   request: Request & { user?: UserTypePayload };
@@ -35,7 +42,11 @@ export const userController = {
       }
       return {
         success: true,
-        user: request.user,
+        user: {
+          ...request.user,
+          profileCoverUrl: request.user?.profileCoverUrl?.pictureUrl,
+          profilePicUrl: request.user?.profilePicUrl?.pictureUrl,
+        },
       };
     } catch (error) {
       throw error;
@@ -186,7 +197,7 @@ export const userController = {
   signIn: async ({ jwt, body, cookie: { ckTkOhello } }: any) => {
     try {
       const { email, password } = body;
-      const user = await getUserByLogin(email, password);
+      const user = await getUserByLogin(email);
       if (!user) {
         throw new ErrorCustom(
           "Email or Password is not correct",
@@ -221,6 +232,9 @@ export const userController = {
         surname: user.surname,
         status: user.status,
         email: user.email,
+        profileCoverUrl: user.profileCoverUrl,
+        profilePicUrl: user.profilePicUrl,
+        username: user.username,
       };
       const token = await jwt.sign(payload);
 
@@ -260,6 +274,100 @@ export const userController = {
           message: "Log out unsuccessful , please try again later",
         };
       }
+    } catch (error) {
+      throw error;
+    }
+  },
+  updateProfile: async ({
+    request,
+    body,
+  }: Omit<UserControllerInput, "body"> & {
+    body: UpdateUserType & FormData;
+  }) => {
+    try {
+      const user = request.user;
+      if (!user || user?.status !== "Active") {
+        throw new ErrorCustom("Unauthorized user", 401);
+      }
+      const data = body;
+
+      console.log(data);
+
+      if (!data) {
+        return {
+          success: false,
+          message: "update user require data",
+        };
+      }
+
+      const cleanedObj = Object.fromEntries(
+        Object.entries(data).filter(
+          ([key, value]) =>
+            value !== undefined &&
+            !["profilePicUrl", "profileCoverUrl"].includes(key)
+        )
+      );
+
+      console.log(cleanedObj);
+
+      await updateUser(user.id, {
+        ...cleanedObj,
+      });
+
+      if (data.profileCoverUrl) {
+        if (user?.profileCoverUrl?.FileId) {
+          await deleteFromImageKit(user?.profileCoverUrl?.FileId);
+        }
+        const uploadCoverPic = await uploadToImageKit(
+          data.profileCoverUrl,
+          "cover-image"
+        );
+
+        if (uploadCoverPic && !uploadCoverPic.message) {
+          const updatedUser = await updateUserPicture(
+            user.id,
+            "cover",
+            uploadCoverPic.url as string,
+            uploadCoverPic.fileId as string
+          );
+          if (!updatedUser) {
+            return {
+              success: false,
+              message: "update user failure",
+            };
+          }
+        }
+      }
+
+      if (data.profilePicUrl) {
+        if (user?.profilePicUrl?.FileId) {
+          await deleteFromImageKit(user?.profilePicUrl?.FileId);
+        }
+        const uploadProfilePic = await uploadToImageKit(
+          data.profilePicUrl,
+          "profile-image"
+        );
+
+        if (uploadProfilePic && !uploadProfilePic.message) {
+          const updatedUser = await updateUserPicture(
+            user.id,
+            "profile",
+            uploadProfilePic.url as string,
+            uploadProfilePic.fileId as string
+          );
+          if (!updatedUser) {
+            return {
+              success: false,
+              message: "update user failure",
+            };
+          }
+        }
+      }
+
+      return {
+        success: true,
+        message: "update user successfully",
+      };
     } catch (error) {
       throw error;
     }

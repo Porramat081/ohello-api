@@ -55,7 +55,7 @@ export const uploadToImageKit = async (file: File, label: string) => {
   }
 };
 
-export const deleteFromImageKit = async (fileId: string) => {
+export const deleteFromImageKit = async (fileId: string | undefined) => {
   try {
     if (!fileId) {
       return {

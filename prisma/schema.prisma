@@ -34,27 +34,31 @@ enum FriendStatus {
 }
 
 model Users {
-  id            String      @id @default(uuid()) @map("_id")
-  firstName     String
-  surname       String
-  email         String      @unique
-  password      String
-  username      String?
-  status        UserStatus  @default(Pending)
-  verifyCode    String?
-  profilePicUrl String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  Posts         Posts[]
-  likePosts     LikePosts[]
+  id              String       @id @default(uuid()) @map("_id")
+  firstName       String
+  surname         String
+  email           String       @unique
+  password        String
+  username        String?
+  bio             String?
+  status          UserStatus   @default(Pending)
+  verifyCode      String?
+  profilePicUrl   UserPicture? @relation("userProfilePic", fields: [userProfilePicId], references: [id], onDelete: Cascade)
+  profileCoverUrl UserPicture? @relation("userCoverPic", fields: [userCoverPicId], references: [id], onDelete: Cascade)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  Posts           Posts[]
+  likePosts       LikePosts[]
 
   FriendsRecieved Friends[] @relation("ReceivingUser")
   FriendsRequest  Friends[] @relation("RequestingUser")
 
   StartChatRoom ChatRoom[] @relation("UserMember1")
 
-  DestChatRoom ChatRoom[] @relation("UserMember2")
-  Message      Message[]
+  DestChatRoom     ChatRoom[] @relation("UserMember2")
+  Message          Message[]
+  userProfilePicId String?
+  userCoverPicId   String?
 }
 
 model Posts {
@@ -129,4 +133,15 @@ model Message {
   updatedAt   DateTime @updatedAt
   writerId    String
   WriterUser  Users    @relation(fields: [writerId], references: [id], onDelete: Cascade)
+}
+
+model UserPicture {
+  id         String   @id @default(uuid()) @map("_id")
+  FileId     String
+  pictureUrl String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  userCoverPic   Users[] @relation("userCoverPic")
+  userProfilePic Users[] @relation("userProfilePic")
 }

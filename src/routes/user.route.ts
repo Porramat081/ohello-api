@@ -18,4 +18,5 @@ export default new Elysia({ prefix: "/api/user" })
   .post("/signin", userController.signIn)
   .post("/signup", userController.createUser, { body: createUserSchema })
   .get("/signout", userController.signout)
-  .post("/verifyUser", userController.verifyUser);
+  .post("/verifyUser", userController.verifyUser)
+  .patch("/updateUser", userController.updateProfile);

@@ -1,5 +1,5 @@
 import { PrismaClient, UserStatus } from "@prisma/client";
-import { UserTypeInput } from "../../types/user";
+import { UserPicType, UserTypeInput } from "../../types/user";
 import { generateVerifyCode } from "../utils/email";
 import { db } from "../utils/db";
 import { isExceedTime } from "../utils/time";
@@ -10,6 +10,7 @@ interface UserDataType {
   firstName?: string;
   surname?: string;
   status?: UserStatus;
+  username?: string;
 }
 
 export const getUserData = async (userId: string) => {
@@ -21,17 +22,45 @@ export const getUserData = async (userId: string) => {
   return user;
 };
 
-export const getUserByLogin = async (email: string, password: string) => {
+export const getUserByLogin = async (email: string) => {
   const user = await db.users.findUnique({
     where: {
       email,
+    },
+    select: {
+      id: true,
+      firstName: true,
+      surname: true,
+      status: true,
+      email: true,
+      password: true,
+      username: true,
+      profileCoverUrl: {
+        select: {
+          pictureUrl: true,
+          FileId: true,
+        },
+      },
+      profilePicUrl: {
+        select: {
+          pictureUrl: true,
+          FileId: true,
+        },
+      },
     },
   });
   return user;
 };
 
 export const getUserById = async (userId: string) => {
-  const user = await db.users.findUnique({ where: { id: userId } });
+  const user = await db.users.findUnique({
+    where: { id: userId },
+    select: {
+      profileCoverUrl: true,
+      profilePicUrl: true,
+    },
+  });
+  return user;
 };
 
 export const getVerify = async (userId: string) => {
@@ -75,10 +104,85 @@ export const createUser = async ({
   return newUser;
 };
 
+export const updateUserPicture = async (
+  userId: string,
+  type: "profile" | "cover",
+  newUrl: string,
+  newFileId: string
+) => {
+  const isExistPic = await db.users.findFirst({
+    where: {
+      id: userId,
+    },
+    select: {
+      profileCoverUrl: type === "cover",
+      profilePicUrl: type === "profile",
+    },
+  });
+
+  if (
+    isExistPic && type === "cover"
+      ? isExistPic?.profileCoverUrl?.id
+      : isExistPic?.profilePicUrl?.id
+  ) {
+    const res = await db.userPicture.update({
+      where: {
+        id:
+          type === "cover"
+            ? isExistPic?.profileCoverUrl?.id
+            : isExistPic?.profilePicUrl?.id,
+      },
+      data: {
+        pictureUrl: newUrl,
+        FileId: newFileId,
+      },
+    });
+    return res;
+  } else {
+    const res = await db.userPicture.create({
+      data: {
+        pictureUrl: newUrl,
+        FileId: newFileId,
+      },
+    });
+    if (res) {
+      const finalRes = await db.users.update({
+        where: { id: userId },
+        data: {
+          [type === "cover" ? "userCoverPicId" : "userProfilePicId"]: res.id,
+        },
+      });
+      return finalRes;
+    }
+  }
+};
+
 export const updateUser = async (userId: string, data: UserDataType) => {
   const updatedUser = await db.users.update({
     where: { id: userId },
-    data,
+    data: data,
+    select: {
+      id: true,
+      username: true,
+      status: true,
+      email: true,
+      verifyCode: true,
+      firstName: true,
+      surname: true,
+      updatedAt: true,
+      profilePicUrl: {
+        select: {
+          pictureUrl: true,
+          FileId: true,
+        },
+      },
+      profileCoverUrl: {
+        select: {
+          pictureUrl: true,
+          FileId: true,
+        },
+      },
+    },
   });
   return updatedUser;
 };
@@ -107,7 +211,10 @@ export const verifyUser = async (userId: string, verifyCode: string) => {
       surname: res.surname,
       id: res.id,
       status: res.status,
+      username: res.username,
       varifyCode: res.verifyCode,
+      profilePicUrl: res.profilePicUrl,
+      profileCoverUrl: res.profileCoverUrl,
     };
   }
   return { message: "code incorrect" };
