@@ -23,7 +23,10 @@ import { deleteFromImageKit, uploadToImageKit } from "../utils/imageKit";
 
 export interface UserControllerInput {
   request: Request & { user?: UserTypePayload };
-  body: UserTypeInput | { verifyCode: string };
+  body:
+    | UserTypeInput
+    | { verifyCode: string }
+    | { email: string; password: string };
   jwt: any;
   cookie: {
     [key: string]: {
@@ -194,9 +197,9 @@ export const userController = {
       throw error;
     }
   },
-  signIn: async ({ jwt, body, cookie: { ckTkOhello } }: any) => {
+  signIn: async ({ jwt, body, cookie }: UserControllerInput) => {
     try {
-      const { email, password } = body;
+      const { email, password } = body as { email: string; password: string };
       const user = await getUserByLogin(email);
       if (!user) {
         throw new ErrorCustom(
@@ -209,10 +212,6 @@ export const userController = {
           }
         );
       }
-      // return {
-      //   success: false,
-      //   message: "Not found email user",
-      // };
       const isCorrectPassword = await compare(password, user?.password);
       if (!isCorrectPassword) {
         throw new ErrorCustom(
@@ -235,17 +234,20 @@ export const userController = {
         profileCoverUrl: user.profileCoverUrl,
         profilePicUrl: user.profilePicUrl,
         username: user.username,
+        bio: user.bio,
       };
       const token = await jwt.sign(payload);
 
-      ckTkOhello.set({
-        value: token,
-        httpOnly: true,
-        // domain:'http://localhost:',
-        // path: "/api/user",
-        maxAge: 24 * 2 * 60 * 60,
-        secure: true,
-      });
+      if (env.COOKIES_NAME) {
+        cookie[env.COOKIES_NAME].set({
+          value: token,
+          httpOnly: true,
+          // domain:'http://localhost:',
+          // path: "/api/user",
+          maxAge: 24 * 2 * 60 * 60,
+          secure: true,
+        });
+      }
 
       return { success: true, message: "Login Success" };
     } catch (error) {
@@ -279,8 +281,10 @@ export const userController = {
     }
   },
   updateProfile: async ({
+    jwt,
     request,
     body,
+    cookie,
   }: Omit<UserControllerInput, "body"> & {
     body: UpdateUserType & FormData;
   }) => {
@@ -290,8 +294,6 @@ export const userController = {
         throw new ErrorCustom("Unauthorized user", 401);
       }
       const data = body;
-
-      console.log(data);
 
       if (!data) {
         return {
@@ -304,18 +306,47 @@ export const userController = {
         Object.entries(data).filter(
           ([key, value]) =>
             value !== undefined &&
-            !["profilePicUrl", "profileCoverUrl"].includes(key)
+            ![
+              "profilePicUrl",
+              "profileCoverUrl",
+              "defaultValue",
+              "newPassword",
+              "confirmPassword",
+              "oldPassword",
+            ].includes(key)
         )
       );
 
-      console.log(cleanedObj);
+      if (data.oldPassword && data.newPassword) {
+        const getUser = await getUserById(user.id, true);
+        if (!getUser) {
+          throw new ErrorCustom("Fail to change password", 401);
+        }
+        const isCorrectPassword = await compare(
+          data.oldPassword,
+          getUser.password
+        );
+        if (!isCorrectPassword) {
+          throw new ErrorCustom(
+            "Password is not correct",
+            400,
+            "CUSTOM_ERROR",
+            {
+              oldPassword: ["this password may not correct"],
+            }
+          );
+        } else {
+          const hashPassword = await hash(data.newPassword, 10);
+          cleanedObj.password = hashPassword;
+        }
+      }
 
       await updateUser(user.id, {
         ...cleanedObj,
       });
 
       if (data.profileCoverUrl) {
-        if (user?.profileCoverUrl?.FileId) {
+        if (user?.profileCoverUrl) {
           await deleteFromImageKit(user?.profileCoverUrl?.FileId);
         }
         const uploadCoverPic = await uploadToImageKit(
@@ -362,6 +393,21 @@ export const userController = {
             };
           }
         }
+      }
+
+      //update cookie
+      const payload = await getUserById(user.id);
+      const token = await jwt.sign(payload);
+
+      if (env.COOKIES_NAME) {
+        cookie[env.COOKIES_NAME].set({
+          value: token,
+          httpOnly: true,
+          // domain:'http://localhost:',
+          // path: "/api/user",
+          maxAge: 24 * 2 * 60 * 60,
+          secure: true,
+        });
       }
 
       return {

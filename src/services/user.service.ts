@@ -33,6 +33,7 @@ export const getUserByLogin = async (email: string) => {
       surname: true,
       status: true,
       email: true,
+      bio: true,
       password: true,
       username: true,
       profileCoverUrl: {
@@ -52,12 +53,20 @@ export const getUserByLogin = async (email: string) => {
   return user;
 };
 
-export const getUserById = async (userId: string) => {
+export const getUserById = async (userId: string, option?: boolean) => {
   const user = await db.users.findUnique({
     where: { id: userId },
     select: {
+      id: true,
+      firstName: true,
+      surname: true,
+      status: true,
+      email: true,
       profileCoverUrl: true,
       profilePicUrl: true,
+      username: true,
+      bio: true,
+      password: option,
     },
   });
   return user;

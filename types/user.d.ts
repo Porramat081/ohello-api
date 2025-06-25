@@ -22,6 +22,8 @@ export interface UpdateUserType {
   username?: string;
   firstName?: string;
   surname?: string;
+  oldPassword?: string;
+  newPassword?: string;
 }
 
 export type UserPicType = {
