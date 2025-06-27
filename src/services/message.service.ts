@@ -29,7 +29,8 @@ export const createNewChatRoom = async (
 export const searchChatRoomByMember = async (
   memberId1: string,
   memberId2: string,
-  isGetting?: boolean
+  isGetting?: boolean,
+  page?: number
 ) => {
   const chatRoom = await db.chatRoom.findFirst({
     where: {
@@ -40,7 +41,29 @@ export const searchChatRoomByMember = async (
     },
     select: {
       id: true,
-      Message: isGetting,
+      Message: isGetting
+        ? page
+          ? { take: page, orderBy: { createdAt: "asc" } }
+          : true
+        : true,
+      userMember1: {
+        select: {
+          id: true,
+          firstName: true,
+          surname: true,
+          profilePicUrl: true,
+          FriendsRequest: {
+            where: {
+              AND: [{ recievedId: memberId1 }, { requestId: memberId2 }],
+            },
+          },
+          FriendsRecieved: {
+            where: {
+              AND: [{ recievedId: memberId2 }, { requestId: memberId1 }],
+            },
+          },
+        },
+      },
       userMember2: {
         select: {
           id: true,
@@ -77,4 +100,22 @@ export const createNewMessage = async (
     },
   });
   return newMessage;
+};
+
+export const updateReadRecord = async (userId: string, roomId: string) => {
+  const res = await db.message.updateMany({
+    where: {
+      chatRoomId: roomId,
+      status: "Unread",
+      NOT: {
+        writerId: userId,
+      },
+    },
+    data: { status: "Read" },
+  });
+  return res;
+};
+
+export const deleteAllChat = async (roomId: string) => {
+  await db.message.deleteMany({ where: { chatRoomId: roomId } });
 };

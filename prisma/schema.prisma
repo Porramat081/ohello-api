@@ -33,6 +33,11 @@ enum FriendStatus {
   Block
 }
 
+enum MessageStatus {
+  Read
+  Unread
+}
+
 model Users {
   id              String       @id @default(uuid()) @map("_id")
   firstName       String
@@ -72,7 +77,8 @@ model Posts {
   images PostImage[]
   like   LikePosts[]
 
-  hostPostId String?
+  hostPostId   String? @default("")
+  commentCount Int     @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -125,14 +131,15 @@ model ChatRoom {
 }
 
 model Message {
-  id          String   @id @default(uuid()) @map("_id")
+  id          String        @id @default(uuid()) @map("_id")
   chatRoomId  String
   content     String
-  ChatRoomOwn ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  ChatRoomOwn ChatRoom      @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
   writerId    String
-  WriterUser  Users    @relation(fields: [writerId], references: [id], onDelete: Cascade)
+  status      MessageStatus @default(Unread)
+  WriterUser  Users         @relation(fields: [writerId], references: [id], onDelete: Cascade)
 }
 
 model UserPicture {

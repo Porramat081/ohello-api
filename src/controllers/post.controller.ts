@@ -17,6 +17,7 @@ interface PostControllerInput {
   body: {
     content: string;
     "images[]": File[] | File;
+    hostPostId?: string;
   };
 }
 
@@ -80,7 +81,7 @@ export const postController = {
       }
 
       const rawData = { content: body.content, images: uploadedImage };
-      const newPost = await createNewPost(rawData, user.id);
+      const newPost = await createNewPost(rawData, user.id, body.hostPostId);
 
       if (!newPost) {
         return {
@@ -96,9 +97,11 @@ export const postController = {
       throw error;
     }
   },
-  getFeedPosts: async () => {
+  getFeedPosts: async ({ params }: { params: { postId: string } }) => {
     try {
-      const posts = await getFeedPosts();
+      const hostPostId = params?.postId;
+
+      const posts = await getFeedPosts(undefined, hostPostId);
       if (!posts.length || posts.length <= 0) {
         return {
           success: false,

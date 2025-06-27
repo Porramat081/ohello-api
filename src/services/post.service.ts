@@ -1,4 +1,4 @@
-import { PostStatus, PrismaClient } from "@prisma/client";
+import { PostStatus, Prisma, PrismaClient } from "@prisma/client";
 import { db } from "../utils/db";
 import { PostTypeInput } from "../../types/post";
 import { deleteFromImageKit } from "../utils/imageKit";
@@ -14,14 +14,29 @@ interface PostObjInput {
   images: ImageObj[];
 }
 
-export const createNewPost = async (postObj: PostObjInput, userId: string) => {
+export const createNewPost = async (
+  postObj: PostObjInput,
+  userId: string,
+  hostPostId?: string
+) => {
   const newPost = await db.$transaction(async (prisma) => {
     const post = await prisma.posts.create({
       data: {
         content: postObj.content,
         authorId: userId,
+        hostPostId,
       },
     });
+    if (hostPostId) {
+      await prisma.posts.update({
+        where: {
+          id: hostPostId,
+        },
+        data: {
+          commentCount: post.commentCount + 1,
+        },
+      });
+    }
     if (postObj.images && postObj.images.length > 0) {
       await Promise.all(
         postObj.images.map((image, index) => {
@@ -54,16 +69,23 @@ export const getPostUserByUserId = async (
   return result;
 };
 
-export const getFeedPosts = async (postType?: PostStatus) => {
+export const getFeedPosts = async (
+  postType?: PostStatus,
+  hostPostId?: string
+) => {
   const result = await db.posts.findMany({
     where: {
       status: postType || "Public",
+      hostPostId: hostPostId || "",
     },
+
     include: {
       author: {
         select: {
           firstName: true,
           surname: true,
+          profilePicUrl: true,
+          username: true,
         },
       },
       images: {

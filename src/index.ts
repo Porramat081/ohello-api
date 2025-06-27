@@ -34,9 +34,17 @@ const app = new Elysia()
   .use(friendRoute)
   .use(messageRoute)
   .ws("/wsMessage/:roomId", {
-    open(ws) {
+    async open(ws) {
       const roomId = ws.data.params.roomId;
+      // const result = await messageController.updateReadChat({
+      //   request: ws.data.request,
+      //   params: ws.data.params,
+      // });
+      // if (result.count > 0) {
+      //   ws.publish(roomId, JSON.stringify({ read: "reading" }));
+      // }
       ws.subscribe(roomId);
+      //ws.publish(roomId, JSON.stringify({ read: "reading" }));
       console.log(`Client joined room : ${ws.data.params.roomId}`);
     },
     async message(ws, { message }) {
@@ -53,6 +61,7 @@ const app = new Elysia()
           JSON.stringify({
             writerId: newMessage.writerId,
             message,
+            createdAt: newMessage.createdAt,
           })
         );
       }

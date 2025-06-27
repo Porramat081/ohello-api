@@ -6,11 +6,12 @@ import {
   createNewMessage,
   getAllChatRoom,
   searchChatRoomByMember,
+  updateReadRecord,
 } from "../services/message.service";
 
 interface MessageControllerType {
   request: Request & { user?: UserTypePayload };
-  params?: { targetId?: string; roomId?: string };
+  params?: { targetId?: string; roomId?: string; page?: string };
   body?: {
     content: string;
   };
@@ -51,23 +52,32 @@ export const messageController = {
       if (!targetId) {
         throw new ErrorCustom("Have no room id", 401);
       }
-      const result = await searchChatRoomByMember(userId, targetId, true);
+      const result = await searchChatRoomByMember(
+        userId,
+        targetId,
+        true,
+        Number(params?.page) || 10
+      );
       if (!result) {
         //check existing friend
         const finalResult = await createNewChatRoom(userId, targetId);
         return finalResult;
       }
+      const targetObj =
+        result.userMember2.id === userId
+          ? result.userMember1
+          : result.userMember2;
       return {
         id: result.id,
         message: result.Message,
         targetUser: {
-          id: result.userMember2.id,
-          firstName: result.userMember2.firstName,
-          surname: result.userMember2.surname,
-          profilePicUrl: result.userMember2.profilePicUrl,
+          id: targetObj.id,
+          firstName: targetObj.firstName,
+          surname: targetObj.surname,
+          profilePicUrl: targetObj.profilePicUrl,
           friendDetail: [
-            ...result.userMember2.FriendsRecieved,
-            ...result.userMember2.FriendsRequest,
+            ...targetObj.FriendsRecieved,
+            ...targetObj.FriendsRequest,
           ],
         },
       };
@@ -96,6 +106,23 @@ export const messageController = {
       }
       const newMessage = await createNewMessage(userId, roomId, content);
       return newMessage;
+    } catch (error) {
+      throw error;
+    }
+  },
+  updateReadChat: async ({ request, params }: MessageControllerType) => {
+    try {
+      const userId = request.user?.id;
+      const userStatus = request.user?.status;
+      const roomId = params?.roomId;
+      if (!userId || userStatus !== "Active") {
+        throw new ErrorCustom("unauthorized user", 401);
+      }
+      if (!roomId) {
+        throw new ErrorCustom("Have no room id", 401);
+      }
+      const res = await updateReadRecord(userId, roomId);
+      return res;
     } catch (error) {
       throw error;
     }
