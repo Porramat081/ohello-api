@@ -155,9 +155,11 @@ export const postController = {
           message: "Can't update like status post",
         };
       }
+
       return {
         success: true,
         message: "Update like status post success",
+        type: result.type,
       };
     } catch (error) {
       throw error;

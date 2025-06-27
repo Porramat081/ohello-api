@@ -94,6 +94,18 @@ export const getFeedPosts = async (
           order: true,
         },
       },
+      like: {
+        select: {
+          user: {
+            select: {
+              profilePicUrl: true,
+              firstName: true,
+              surname: true,
+              id: true,
+            },
+          },
+        },
+      },
     },
     orderBy: {
       updatedAt: "desc",
@@ -194,7 +206,7 @@ export const likePost = async (postId: string, userId: string) => {
       userId,
     },
   });
-  return result;
+  return { result, type: "increase" };
 };
 
 export const unLikePost = async (likePostId: string, userId: string) => {
@@ -204,7 +216,7 @@ export const unLikePost = async (likePostId: string, userId: string) => {
       userId,
     },
   });
-  return result;
+  return { result, type: "decrease" };
 };
 
 export const clearAllPost = async () => {
