@@ -12,9 +12,15 @@ import {
 
 interface MessageControllerType {
   request: Request & { user?: UserTypePayload };
-  params?: { targetId?: string; roomId?: string; page?: string };
+  params?: {
+    targetId?: string;
+    roomId?: string;
+    page?: string;
+    userId?: string;
+  };
   body?: {
-    content: string;
+    content?: string;
+    currentStatus?: boolean;
   };
 }
 
@@ -58,6 +64,7 @@ export const messageController = {
         throw new ErrorCustom("unauthorized user", 401);
       }
       const targetId = params?.targetId;
+      const page = params?.page || 1;
       if (!targetId) {
         throw new ErrorCustom("Have no room id", 401);
       }
@@ -65,7 +72,7 @@ export const messageController = {
         userId,
         targetId,
         true,
-        Number(params?.page) || 10
+        Number(page)
       );
       if (!result) {
         //check existing friend
@@ -162,18 +169,20 @@ export const messageController = {
       throw error;
     }
   },
-  updateReadChat: async ({ request, params }: MessageControllerType) => {
+  updateReadChat: async ({ request, params, body }: MessageControllerType) => {
     try {
       const userId = request.user?.id;
       const userStatus = request.user?.status;
       const roomId = params?.roomId;
+      const currentStatus = body?.currentStatus;
       if (!userId || userStatus !== "Active") {
         throw new ErrorCustom("unauthorized user", 401);
       }
       if (!roomId) {
         throw new ErrorCustom("Have no room id", 401);
       }
-      const res = await updateReadRecord(userId, roomId);
+      const res = await updateReadRecord(roomId, currentStatus || false);
+
       return res;
     } catch (error) {
       throw error;

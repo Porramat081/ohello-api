@@ -5,6 +5,9 @@ export const getAllChatRoom = async (userId: string) => {
     where: {
       OR: [{ memberId1: userId }, { memberId2: userId }],
     },
+    orderBy: {
+      updatedAt: "desc",
+    },
   });
   return userChatList;
 };
@@ -43,7 +46,10 @@ export const searchChatRoomByMember = async (
       id: true,
       Message: isGetting
         ? page
-          ? { take: page, orderBy: { createdAt: "asc" } }
+          ? {
+              take: page * 10,
+              orderBy: { createdAt: "desc" },
+            }
           : true
         : true,
       userMember1: {
@@ -102,16 +108,16 @@ export const createNewMessage = async (
   return newMessage;
 };
 
-export const updateReadRecord = async (userId: string, roomId: string) => {
-  const res = await db.message.updateMany({
+export const updateReadRecord = async (
+  roomId: string,
+  currentStatus: boolean
+) => {
+  const res = await db.chatRoom.updateMany({
     where: {
-      chatRoomId: roomId,
-      status: "Unread",
-      NOT: {
-        writerId: userId,
-      },
+      id: roomId,
+      lastStatus: !currentStatus,
     },
-    data: { status: "Read" },
+    data: { lastStatus: currentStatus },
   });
   return res;
 };
@@ -156,11 +162,6 @@ export const getLastChats = async (userId: string) => {
         },
       },
       Message: {
-        where: {
-          NOT: {
-            writerId: userId,
-          },
-        },
         orderBy: {
           createdAt: "desc",
         },

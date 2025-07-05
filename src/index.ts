@@ -33,21 +33,51 @@ const app = new Elysia()
   .use(postRoute)
   .use(friendRoute)
   .use(messageRoute)
-  .ws("/wsMessage/:roomId", {
+  .ws("/notify/:userId", {
     open(ws) {
+      const userId = ws.data.params.userId;
+      ws.subscribe(userId);
+      console.log(`${userId} connect notify socket`);
+    },
+    async message(ws, { roomId }) {
+      const targetId = ws.data.params.userId;
+      if (targetId && roomId) {
+        await messageController.updateReadChat({
+          request: ws.data.request,
+          params: { ...ws.data.params, roomId },
+          body: { currentStatus: false },
+        });
+        ws.publish(
+          targetId,
+          JSON.stringify({
+            success: true,
+            message: "New message arrived",
+          })
+        );
+      }
+    },
+    close(ws) {
+      const userId = ws.data.params.userId;
+      console.log(`${userId} close notify socket`);
+    },
+  })
+  .ws("/wsMessage/:roomId", {
+    async open(ws) {
       const roomId = ws.data.params.roomId;
-      // const result = await messageController.updateReadChat({
-      //   request: ws.data.request,
-      //   params: ws.data.params,
-      // });
-      // if (result.count > 0) {
-      //   ws.publish(roomId, JSON.stringify({ read: "reading" }));
-      // }
+
+      if (roomId) {
+        await messageController.updateReadChat({
+          request: ws.data.request,
+          params: ws.data.params,
+          body: { currentStatus: true },
+        });
+      }
+
       ws.subscribe(roomId);
       //ws.publish(roomId, JSON.stringify({ read: "reading" }));
       console.log(`Client joined room : ${ws.data.params.roomId}`);
     },
-    async message(ws, { message, notifyRoom }) {
+    async message(ws, { message }) {
       const roomId = ws.data.params.roomId;
       const newMessage = await messageController.createNewMessage({
         request: ws.data.request,
@@ -56,7 +86,6 @@ const app = new Elysia()
       });
 
       if (newMessage) {
-        ws.publish(notifyRoom, { roomId });
         ws.publish(
           roomId,
           JSON.stringify({

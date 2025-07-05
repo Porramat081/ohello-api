@@ -4,7 +4,7 @@ import { deleteAllChat } from "../services/message.service";
 
 export default new Elysia({ prefix: "/api/message" })
   .get("/allChatRoom", messageController.getAllChatRoom)
-  .get("/getChat/:targetId", messageController.getChat)
+  .get("/getChat/:targetId/:page", messageController.getChat)
   .delete("/deleteChat/:roomId", async ({ request, params }: any) => {
     const roomId = params.roomId;
     await deleteAllChat(roomId);
