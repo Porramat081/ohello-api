@@ -5,7 +5,7 @@ import { clearAllPost } from "../services/post.service";
 export default new Elysia({ prefix: "/api/post" })
   .post("/", postController.createNewPost)
   .get("/getUserPosts", postController.getUserPost)
-  .get("/getFeedPosts", postController.getFeedPosts)
+  .get("/getFeedPosts/:typePost", postController.getFeedPosts)
   .get("/getComment/:postId", postController.getFeedPosts)
   .post("/likePost", postController.likeOrUnlikePost)
   .patch("/editPost/:postId", postController.editPost)

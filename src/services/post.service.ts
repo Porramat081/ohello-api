@@ -12,6 +12,7 @@ interface ImageObj {
 interface PostObjInput {
   content: string;
   images: ImageObj[];
+  status?: PostStatus;
 }
 
 export const createNewPost = async (
@@ -23,6 +24,7 @@ export const createNewPost = async (
     const post = await prisma.posts.create({
       data: {
         content: postObj.content,
+        status: postObj.status || "Public",
         authorId: userId,
         hostPostId,
       },
@@ -65,18 +67,36 @@ export const getPostUserByUserId = async (
       authorId: userId,
       status: postType,
     },
+    include: {
+      author: {
+        select: {
+          firstName: true,
+          surname: true,
+          profilePicUrl: true,
+        },
+      },
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
   });
   return result;
 };
 
 export const getFeedPosts = async (
   postType?: PostStatus,
-  hostPostId?: string
+  hostPostId?: string,
+  userId?: string
 ) => {
   const result = await db.posts.findMany({
     where: {
       status: postType || "Public",
       hostPostId: hostPostId || "",
+      ...(postType === "Draft"
+        ? {
+            authorId: userId,
+          }
+        : {}),
     },
 
     include: {

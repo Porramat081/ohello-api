@@ -8,4 +8,5 @@ export default new Elysia({ prefix: "/api/message" })
   .delete("/deleteChat/:roomId", async ({ request, params }: any) => {
     const roomId = params.roomId;
     await deleteAllChat(roomId);
-  });
+  })
+  .get("/lastMessages", messageController.getLastChat);

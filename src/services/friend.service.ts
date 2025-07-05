@@ -1,4 +1,4 @@
-import { FriendStatus } from "@prisma/client";
+import { FriendStatus, PostStatus } from "@prisma/client";
 import { db } from "../utils/db";
 
 export const getFriendService = async (userId: string) => {
@@ -10,6 +10,7 @@ export const getFriendService = async (userId: string) => {
       status: "Active",
     },
     select: {
+      id: true,
       firstName: true,
       surname: true,
       profilePicUrl: true,
@@ -19,6 +20,90 @@ export const getFriendService = async (userId: string) => {
     },
   });
   return friends;
+};
+
+export const getFriendById = async (
+  targetId: string,
+  userId: string,
+  typePost: PostStatus | undefined
+) => {
+  const target = await db.users.findUnique({
+    where: { id: targetId },
+    select: {
+      firstName: true,
+      surname: true,
+      profilePicUrl: true,
+      profileCoverUrl: true,
+      bio: true,
+      FriendsRecieved: {
+        where: {
+          requestId: userId,
+        },
+      },
+      FriendsRequest: {
+        where: {
+          recievedId: userId,
+        },
+      },
+      Posts: {
+        where: {
+          hostPostId: "",
+        },
+        select: {
+          id: true,
+          content: true,
+          status: true,
+          like: true,
+          images: true,
+          hostPostId: true,
+          commentCount: true,
+          createdAt: true,
+          author: true,
+          authorId: true,
+          updatedAt: true,
+        },
+      },
+    },
+  });
+  if (
+    (target?.FriendsRecieved?.length && target?.FriendsRecieved?.length > 0) ||
+    (target?.FriendsRequest?.length && target?.FriendsRequest?.length > 0)
+  ) {
+    if (
+      target.FriendsRecieved[0]?.status === "Accept" ||
+      target.FriendsRequest[0]?.status === "Accept"
+    ) {
+      return {
+        ...target,
+        Posts: target.Posts.filter(
+          (item) => item.status === "Public" || item.status === "FriendOnly"
+        ),
+        isYourFriend: true,
+        friendStatus: "Chat",
+      };
+    } else if (target.FriendsRecieved[0]?.status === "Pending") {
+      return {
+        ...target,
+        Posts: target.Posts.filter((item) => item.status === "Public"),
+        isYourFriend: true,
+        friendStatus: "Cancel Request",
+      };
+    } else if (target.FriendsRequest[0]?.status === "Pending") {
+      return {
+        ...target,
+        Posts: target.Posts.filter((item) => item.status === "Public"),
+        isYourFriend: true,
+        friendStatus: "Reject Request",
+      };
+    }
+  }
+
+  return {
+    ...target,
+    Posts: target?.Posts.filter((item) => item.status === "Public"),
+    isYourFriend: false,
+    friendStatus: "Add Friend",
+  };
 };
 
 export const getCount = async (userId: string) => {
@@ -33,6 +118,7 @@ export const getCount = async (userId: string) => {
       },
     },
     select: {
+      id: true,
       status: true,
       recievedId: true,
       requestId: true,
@@ -60,9 +146,9 @@ export const getCount = async (userId: string) => {
       .map((item) => {
         if (item.status === "Accept") {
           if (item.requestId === userId) {
-            return item.userRecieved;
+            return { ...item.userRecieved, updatedAt: item.updatedAt };
           } else {
-            return item.userRequest;
+            return { ...item.userRequest, updatedAt: item.updatedAt };
           }
         }
       })
@@ -70,14 +156,25 @@ export const getCount = async (userId: string) => {
     yourRequest: yourFriend
       .map((item) => {
         if (item.status === "Pending" && item.requestId === userId) {
-          return { ...item.userRecieved, youRequest: true };
+          return {
+            ...item.userRecieved,
+            youRequest: true,
+            updatedAt: item.updatedAt,
+            sendingFriendId: item.id,
+          };
         }
       })
       .filter((item) => item),
     yourReceive: yourFriend
       .map((item) => {
         if (item.status === "Pending" && item.recievedId === userId) {
-          return { ...item.userRecieved, youRequest: false };
+          return {
+            ...item.userRecieved,
+            friendId: item.id,
+            youRequest: false,
+            updatedAt: item.updatedAt,
+            sendingFriendId: item.id,
+          };
         }
       })
       .filter((item) => item),
@@ -85,9 +182,17 @@ export const getCount = async (userId: string) => {
       .map((item) => {
         if (item.status === "Block") {
           if (item.requestId === userId) {
-            return item.userRecieved;
+            return {
+              ...item.userRecieved,
+              updatedAt: item.updatedAt,
+              sendingFriendId: item.id,
+            };
           } else {
-            return item.userRequest;
+            return {
+              ...item.userRequest,
+              updatedAt: item.updatedAt,
+              sendingFriendId: item.id,
+            };
           }
         }
       })
@@ -156,18 +261,27 @@ export const changeFriendStatus = async (
   return updateFriend;
 };
 
-export const deleteFriend = async (userId: string, friendId: string) => {
+export const deleteFriend = async (
+  userId: string,
+  friendId: string,
+  typeDelete: FriendStatus
+) => {
   const result = await db.friends.deleteMany({
     where: {
       OR: [
         {
-          AND: [{ id: friendId }, { recievedId: userId }],
+          requestId: friendId,
+          recievedId: userId,
+          status: typeDelete,
         },
         {
-          AND: [{ id: friendId }, { requestId: userId }],
+          recievedId: friendId,
+          requestId: userId,
+          status: typeDelete,
         },
       ],
     },
   });
+
   return result;
 };

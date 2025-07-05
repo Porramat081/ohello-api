@@ -23,10 +23,9 @@ export const checkSignIn = async ({
 
     if (token) {
       const payload = (await jwt.verify(token)) as UserTypePayload;
-      // if (payload.status === "Active") {
-      //   request.user = payload;
-      // }
-      request.user = payload;
+      if (payload.status !== "InActive") {
+        request.user = payload;
+      }
     }
   }
 };

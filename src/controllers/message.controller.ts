@@ -5,6 +5,7 @@ import {
   createNewChatRoom,
   createNewMessage,
   getAllChatRoom,
+  getLastChats,
   searchChatRoomByMember,
   updateReadRecord,
 } from "../services/message.service";
@@ -35,7 +36,15 @@ export const messageController = {
 
       return {
         success: true,
-        chatRooms: friendChat.yourFriend,
+        chatRooms: friendChat.yourFriend?.sort((a, b) => {
+          if (a?.updatedAt && b?.updatedAt) {
+            return (
+              new Date(a?.updatedAt).getDate() -
+              new Date(b?.updatedAt).getDate()
+            );
+          }
+          return 0;
+        }),
       };
     } catch (error) {
       throw error;
@@ -80,6 +89,49 @@ export const messageController = {
             ...targetObj.FriendsRequest,
           ],
         },
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+  getLastChat: async ({ request }: MessageControllerType) => {
+    try {
+      const userId = request.user?.id;
+      const userStatus = request.user?.status;
+      if (!userId || userStatus !== "Active") {
+        throw new ErrorCustom("unauthorized user", 401);
+      }
+
+      const lastMessages = await getLastChats(userId);
+      if (lastMessages.length && lastMessages.length > 0) {
+        return {
+          success: true,
+          lastMessages: lastMessages.map((item) => {
+            if (item.memberId1 === userId) {
+              return {
+                id: item.id,
+                lastStatus: item.lastStatus,
+                user: item.userMember2,
+                Message: item.Message[0],
+                createdAt: item.createdAt,
+                updatedAt: item.updatedAt,
+              };
+            } else if (item.memberId2 === userId) {
+              return {
+                id: item.id,
+                lastStatus: item.lastStatus,
+                user: item.userMember1,
+                Message: item.Message[0],
+                createdAt: item.createdAt,
+                updatedAt: item.updatedAt,
+              };
+            }
+          }),
+        };
+      }
+      return {
+        success: false,
+        message: "no last chance",
       };
     } catch (error) {
       throw error;

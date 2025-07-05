@@ -127,6 +127,8 @@ model ChatRoom {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  lastStatus Boolean @default(false)
+
   Message Message[]
 }
 

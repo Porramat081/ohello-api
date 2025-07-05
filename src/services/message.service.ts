@@ -119,3 +119,53 @@ export const updateReadRecord = async (userId: string, roomId: string) => {
 export const deleteAllChat = async (roomId: string) => {
   await db.message.deleteMany({ where: { chatRoomId: roomId } });
 };
+
+export const getLastChats = async (userId: string) => {
+  const chats = await db.chatRoom.findMany({
+    where: {
+      OR: [
+        {
+          memberId2: userId,
+          NOT: {
+            memberId1: userId,
+          },
+        },
+        {
+          memberId1: userId,
+          NOT: {
+            memberId2: userId,
+          },
+        },
+      ],
+    },
+    include: {
+      userMember1: {
+        select: {
+          id: true,
+          firstName: true,
+          surname: true,
+          profilePicUrl: true,
+        },
+      },
+      userMember2: {
+        select: {
+          id: true,
+          firstName: true,
+          surname: true,
+          profilePicUrl: true,
+        },
+      },
+      Message: {
+        where: {
+          NOT: {
+            writerId: userId,
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
+    },
+  });
+  return chats;
+};

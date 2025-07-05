@@ -34,7 +34,7 @@ const app = new Elysia()
   .use(friendRoute)
   .use(messageRoute)
   .ws("/wsMessage/:roomId", {
-    async open(ws) {
+    open(ws) {
       const roomId = ws.data.params.roomId;
       // const result = await messageController.updateReadChat({
       //   request: ws.data.request,
@@ -47,7 +47,7 @@ const app = new Elysia()
       //ws.publish(roomId, JSON.stringify({ read: "reading" }));
       console.log(`Client joined room : ${ws.data.params.roomId}`);
     },
-    async message(ws, { message }) {
+    async message(ws, { message, notifyRoom }) {
       const roomId = ws.data.params.roomId;
       const newMessage = await messageController.createNewMessage({
         request: ws.data.request,
@@ -56,6 +56,7 @@ const app = new Elysia()
       });
 
       if (newMessage) {
+        ws.publish(notifyRoom, { roomId });
         ws.publish(
           roomId,
           JSON.stringify({

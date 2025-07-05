@@ -1,3 +1,4 @@
+import { FriendStatus, PostStatus } from "@prisma/client";
 import { UserTypePayload } from "../../types/user";
 import { ErrorCustom } from "../middlewares/error.middleware";
 import {
@@ -6,12 +7,13 @@ import {
   deleteFriend,
   getAllFriend,
   getCount,
+  getFriendById,
   getFriendService,
 } from "../services/friend.service";
 
 interface FriendControllerType {
   request: Request & { user?: UserTypePayload };
-  params?: { cat: string };
+  params?: { cat?: string; targetId?: string; typePost?: string };
   body?: { targetId: string } | { friendId: string };
 }
 
@@ -52,6 +54,7 @@ export const friendController = {
             surname: item.surname,
             profilePicUrl: item.profilePicUrl,
             updatedAt: item.updatedAt,
+            friendId: item.id,
           })),
           ...countFriend,
         };
@@ -59,6 +62,39 @@ export const friendController = {
       return {
         success: false,
         message: "Get friends fail",
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+  getFriendById: async ({ request, params }: FriendControllerType) => {
+    try {
+      const user = request.user;
+      const targetId = params?.targetId;
+      const typePost = params?.typePost;
+
+      if (!user || user.status !== "Active" || user.id === targetId) {
+        throw new ErrorCustom("User unauthorized", 401);
+      }
+      if (!targetId) {
+        throw new ErrorCustom("Not found friend user", 404);
+      }
+      const result = await getFriendById(
+        targetId,
+        user.id,
+        typePost as PostStatus
+      );
+      if (!result) {
+        //don't show error
+        return {
+          success: false,
+          message: "Not found this user",
+        };
+      }
+      return {
+        success: true,
+        message: "get user success",
+        target: result,
       };
     } catch (error) {
       throw error;
@@ -133,17 +169,22 @@ export const friendController = {
       throw error;
     }
   },
-  cancelFriend: async ({ request, body }: FriendControllerType) => {
+  cancelFriend: async ({ request, params }: FriendControllerType) => {
     try {
       const user = request.user;
-      const friendId = (body as { friendId: string }).friendId;
+      const friendId = (
+        params as { friendId: string; typeDelete: FriendStatus }
+      ).friendId;
+      const typeDelete = (
+        params as { friendId: string; typeDelete: FriendStatus }
+      ).typeDelete;
       if (!user) {
         throw new ErrorCustom("User unauthorized", 401);
       }
       if (!friendId) {
         throw new ErrorCustom("Not friend request", 404);
       }
-      const result = await deleteFriend(user.id, friendId);
+      const result = await deleteFriend(user.id, friendId, typeDelete);
       if (!result) {
         throw new ErrorCustom("Delete friend fail", 401);
       }
