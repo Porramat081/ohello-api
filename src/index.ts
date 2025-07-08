@@ -5,7 +5,7 @@ import jwt from "@elysiajs/jwt";
 import { env } from "bun";
 
 import userRoute from "./routes/user.route";
-import { checkSignIn, CheckSignInType } from "./middlewares/auth.middleware";
+import { checkSignIn } from "./middlewares/auth.middleware";
 import { errorHandle } from "./middlewares/error.middleware";
 import postRoute from "./routes/post.route";
 import friendRoute from "./routes/friend.route";
