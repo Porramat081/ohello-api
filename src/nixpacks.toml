@@ -1,2 +1,14 @@
 [phases.setup]
+    nixPkgs = ['bun']
     nixLibs = ['openssl']
+
+[phases.install]
+    cmds = ['bun install']
+
+[phases.build]
+    cmds = ['bunx prisma generate', 
+        'bunx prisma migrate deploy', 
+        'bun build --target=bun ./src/index.ts --outdir ./build']
+
+[start]
+    cmd = 'bun run src/index.ts'
