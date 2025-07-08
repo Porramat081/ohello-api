@@ -79,11 +79,7 @@ export const friendController = {
       if (!targetId) {
         throw new ErrorCustom("Not found friend user", 404);
       }
-      const result = await getFriendById(
-        targetId,
-        user.id,
-        typePost as PostStatus
-      );
+      const result = await getFriendById(targetId, user.id);
       if (!result) {
         //don't show error
         return {

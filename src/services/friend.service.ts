@@ -22,11 +22,7 @@ export const getFriendService = async (userId: string) => {
   return friends;
 };
 
-export const getFriendById = async (
-  targetId: string,
-  userId: string,
-  typePost: PostStatus | undefined
-) => {
+export const getFriendById = async (targetId: string, userId: string) => {
   const target = await db.users.findUnique({
     where: { id: targetId },
     select: {
