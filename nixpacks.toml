@@ -3,7 +3,7 @@
     nixLibs = ['openssl']
 
 [phases.install]
-    cmds = ['bun install' ,'npm install --os=linux --cpu=x64 sharp']
+    cmds = ['bun install' ,'bun install --os=linux --cpu=x64 sharp']
 
 [phases.build]
     cmds = ['bunx prisma generate', 
