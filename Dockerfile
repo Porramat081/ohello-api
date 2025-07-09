@@ -2,7 +2,7 @@
 FROM oven/bun:latest
 
 # Set working directory
-WORKDIR /
+WORKDIR /app
 
 # Copy dependency files
 COPY package.json bun.lockb ./
@@ -10,14 +10,13 @@ COPY package.json bun.lockb ./
 RUN apt-get update -y && apt-get install -y openssl
 
 # Install dependencies
-RUN bun install
-
-RUN bun run generate
-# RUN bunx prisma generate
-# RUN bunx prisma db push
+RUN bun install --production
 
 # Copy source code
+COPY prisma ./prisma
 COPY . .
+
+RUN bun run generate
 
 # Set environment variables (optional)
 ENV NODE_ENV=production
