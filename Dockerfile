@@ -2,7 +2,7 @@
 FROM oven/bun:latest
 
 # Set working directory
-WORKDIR /app
+WORKDIR /
 
 # Copy dependency files
 COPY package.json bun.lockb ./
