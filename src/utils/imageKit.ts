@@ -3,9 +3,9 @@ import ImageKit from "imagekit";
 import sharp from "sharp";
 
 const imagekit = new ImageKit({
-  publicKey: env.IMAGE_PUBLIC_KEY!,
-  privateKey: env.IMAGE_PRIVATE_KEY!,
-  urlEndpoint: env.IMAGE_URL_ENDPOINT!,
+  publicKey: process.env.IMAGE_PUBLIC_KEY!,
+  privateKey: process.env.IMAGE_PRIVATE_KEY!,
+  urlEndpoint: process.env.IMAGE_URL_ENDPOINT!,
 });
 
 export const uploadToImageKit = async (file: File, label: string) => {

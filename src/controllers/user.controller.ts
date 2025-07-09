@@ -8,7 +8,6 @@ import {
   createUser,
   getUserById,
   getUserByLogin,
-  getUserData,
   getVerify,
   updateUser,
   updateUserPicture,
@@ -68,8 +67,8 @@ export const userController = {
 
       if (result) {
         const token = await jwt.sign(result);
-        if (env.COOKIES_NAME) {
-          cookie[env.COOKIES_NAME].set({
+        if (process.env.COOKIES_NAME) {
+          cookie[process.env.COOKIES_NAME].set({
             value: token,
             httpOnly: true,
             // domain:'http://localhost:',
@@ -179,8 +178,8 @@ export const userController = {
         };
       }
       const token = await jwt.sign(result);
-      if (env.COOKIES_NAME) {
-        cookie[env.COOKIES_NAME].set({
+      if (process.env.COOKIES_NAME) {
+        cookie[process.env.COOKIES_NAME].set({
           value: token,
           httpOnly: true,
           // domain:'http://localhost:',
@@ -238,8 +237,8 @@ export const userController = {
       };
       const token = await jwt.sign(payload);
 
-      if (env.COOKIES_NAME) {
-        cookie[env.COOKIES_NAME].set({
+      if (process.env.COOKIES_NAME) {
+        cookie[process.env.COOKIES_NAME].set({
           value: token,
           httpOnly: true,
           // domain:'http://localhost:',
@@ -262,8 +261,8 @@ export const userController = {
     };
   }) => {
     try {
-      if (env.COOKIES_NAME) {
-        const result = cookie[env.COOKIES_NAME].remove();
+      if (process.env.COOKIES_NAME) {
+        const result = cookie[process.env.COOKIES_NAME].remove();
         if (result) {
           return {
             success: true,
@@ -399,8 +398,8 @@ export const userController = {
       const payload = await getUserById(user.id);
       const token = await jwt.sign(payload);
 
-      if (env.COOKIES_NAME) {
-        cookie[env.COOKIES_NAME].set({
+      if (process.env.COOKIES_NAME) {
+        cookie[process.env.COOKIES_NAME].set({
           value: token,
           httpOnly: true,
           // domain:'http://localhost:',

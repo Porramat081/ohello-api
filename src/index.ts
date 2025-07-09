@@ -3,6 +3,7 @@ import Elysia, { t } from "elysia";
 import cors from "@elysiajs/cors";
 import jwt from "@elysiajs/jwt";
 import { env } from "bun";
+import { config } from "dotenv";
 
 import userRoute from "./routes/user.route";
 import { checkSignIn } from "./middlewares/auth.middleware";
@@ -12,18 +13,20 @@ import friendRoute from "./routes/friend.route";
 import messageRoute from "./routes/message.route";
 import { messageController } from "./controllers/message.controller";
 
+config();
+
 const app = new Elysia()
   .onError(errorHandle)
   .use(
     cors({
-      origin: env.ORIGIN,
+      origin: process.env.ORIGIN,
       methods: ["GET", "POST", "PATCH", "DELETE"],
     })
   )
   .use(
     jwt({
       name: "jwt",
-      secret: env.JWT_SECRET || "",
+      secret: process.env.JWT_SECRET || "",
     })
   )
   .guard({
@@ -100,6 +103,6 @@ const app = new Elysia()
       console.log(`Client left room : ${ws.data.params.roomId}`);
     },
   })
-  .listen(env.PORT || 3001);
+  .listen(process.env.PORT || 3001);
 
 console.log(`Server is running at ${app.server?.hostname}:${app.server?.port}`);

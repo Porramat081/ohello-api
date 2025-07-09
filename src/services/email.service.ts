@@ -11,16 +11,16 @@ type SendingInput = {
 );
 
 export const sendVerifyCode = async (input: SendingInput) => {
-  const verifyLink = env.SENDINGMAIL_DOMAIN || "";
+  const verifyLink = process.env.SENDINGMAIL_DOMAIN || "";
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: env.GMAIL_USER,
-      pass: env.GMAIL_APP_PASS,
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASS,
     },
   });
   const mailOptions = {
-    from: `Ohello Support <${env.GMAIL_USER}>`,
+    from: `Ohello Support <${process.env.GMAIL_USER}>`,
     to: input.email,
     subject: "Ohello Email Verification",
     html: generateVerifyEmail(

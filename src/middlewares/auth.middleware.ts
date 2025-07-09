@@ -18,8 +18,8 @@ export const checkSignIn = async ({
   request,
   cookie,
 }: CheckSignInType) => {
-  if (env.COOKIES_NAME) {
-    const token = cookie[env.COOKIES_NAME].value;
+  if (process.env.COOKIES_NAME) {
+    const token = cookie[process.env.COOKIES_NAME].value;
 
     if (token) {
       const payload = (await jwt.verify(token)) as UserTypePayload;
