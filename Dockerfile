@@ -10,7 +10,7 @@ COPY package.json bun.lockb ./
 RUN apt-get update -y && apt-get install -y openssl
 
 # Install dependencies
-RUN bun install --production
+RUN bun install
 
 # Copy source code
 COPY prisma ./prisma
