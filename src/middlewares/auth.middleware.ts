@@ -27,5 +27,7 @@ export const checkSignIn = async ({
         request.user = payload;
       }
     }
+  } else {
+    console.log("not found token");
   }
 };
