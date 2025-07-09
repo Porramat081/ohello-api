@@ -9,11 +9,13 @@ COPY package.json bun.lockb ./
 
 RUN apt-get update -y && apt-get install -y openssl
 
+RUN bun run generate
 # Install dependencies
 RUN bun install
 
-RUN bunx prisma generate
-RUN bunx prisma db push
+RUN bun run generate
+# RUN bunx prisma generate
+# RUN bunx prisma db push
 
 # Copy source code
 COPY . .
