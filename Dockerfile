@@ -9,7 +9,6 @@ COPY package.json bun.lockb ./
 
 RUN apt-get update -y && apt-get install -y openssl
 
-RUN bun run generate
 # Install dependencies
 RUN bun install
 
