@@ -12,6 +12,9 @@ RUN apt-get update -y && apt-get install -y openssl
 # Install dependencies
 RUN bun install
 
+RUN bunx prisma generate
+RUN bunx prisma db push
+
 # Copy source code
 COPY . .
 
