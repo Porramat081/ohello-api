@@ -40,7 +40,7 @@ export const userController = {
     try {
       const userId = request.user?.id;
       if (!userId) {
-        return { success: false };
+        return { success: false, cookies: process.env.COOKIES_NAME };
       }
       return {
         success: true,

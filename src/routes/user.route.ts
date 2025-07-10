@@ -4,14 +4,6 @@ import { createUserSchema } from "../schemas/user.schema";
 
 export default new Elysia({ prefix: "/api/user" })
   .get("/", userController.getUser)
-  // .get("/getCookie", ({ request, cookie }: any) => {
-  //   const user = request.user;
-  //   return {
-  //     cookie,
-  //     user,
-  //     message: "get",
-  //   };
-  // })
   .get("/getCodeVerify", userController.getCodeVerify)
   .get("/getTimeVerify", userController.getTimeVerify)
   .get("/resendVerify", userController.resendVerify)
