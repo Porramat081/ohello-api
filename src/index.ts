@@ -21,6 +21,7 @@ const app = new Elysia()
     cors({
       origin: process.env.ORIGIN,
       methods: ["GET", "POST", "PATCH", "DELETE"],
+      credentials: true,
     })
   )
   .use(

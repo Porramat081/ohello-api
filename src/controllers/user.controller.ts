@@ -78,6 +78,7 @@ export const userController = {
             // path: "/api/user",
             maxAge: 24 * 2 * 60 * 60,
             secure: true,
+            sameSite: "none",
           });
         }
 
@@ -188,6 +189,7 @@ export const userController = {
           // domain:'http://localhost:',
           // path: "/api/user",
           maxAge: 24 * 2 * 60 * 60,
+          sameSite: "none",
           secure: true,
         });
       }
@@ -248,6 +250,7 @@ export const userController = {
           // path: "/api/user",
           maxAge: 24 * 2 * 60 * 60,
           secure: true,
+          sameSite: "none",
         });
       }
 
@@ -409,6 +412,7 @@ export const userController = {
           // path: "/api/user",
           maxAge: 24 * 2 * 60 * 60,
           secure: true,
+          sameSite: "none",
         });
       }
 
