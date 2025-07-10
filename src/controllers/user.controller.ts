@@ -36,11 +36,14 @@ export interface UserControllerInput {
 }
 
 export const userController = {
-  getUser: async ({ request }: UserControllerInput) => {
+  getUser: async ({ request, cookie }: UserControllerInput) => {
     try {
       const userId = request.user?.id;
       if (!userId) {
-        return { success: false, cookies: process.env.COOKIES_NAME };
+        return {
+          success: false,
+          cookies: cookie[process.env.COOKIES_NAME || ""].value,
+        };
       }
       return {
         success: true,
