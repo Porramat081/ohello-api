@@ -9,4 +9,5 @@ export default new Elysia({ prefix: "/api/message" })
     const roomId = params.roomId;
     await deleteAllChat(roomId);
   })
+  .post("/createMessage/:roomId", messageController.createNewMessage)
   .get("/lastMessages", messageController.getLastChat);

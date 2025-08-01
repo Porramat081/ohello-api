@@ -17,7 +17,6 @@ import { compare, hash } from "bcryptjs";
 import { convertToLocalTime, isExceedTime } from "../utils/time";
 import { sendVerifyCode } from "../services/email.service";
 import { generateVerifyCode } from "../utils/email";
-import { env } from "bun";
 import { deleteFromImageKit, uploadToImageKit } from "../utils/imageKit";
 
 export interface UserControllerInput {
@@ -36,13 +35,12 @@ export interface UserControllerInput {
 }
 
 export const userController = {
-  getUser: async ({ request, cookie }: UserControllerInput) => {
+  getUser: async ({ request }: UserControllerInput) => {
     try {
       const userId = request.user?.id;
       if (!userId) {
         return {
           success: false,
-          cookies: cookie[process.env.COOKIES_NAME || ""].value,
         };
       }
       return {
