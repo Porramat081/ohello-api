@@ -85,7 +85,7 @@ export const messageController = {
           ? result.userMember1
           : result.userMember2;
 
-      await updateMessageStatus(result.Message[0].chatRoomId, targetObj.id);
+      await updateMessageStatus(result.Message[0]?.chatRoomId, targetObj.id);
       return {
         id: result.id,
         message: result.Message,
