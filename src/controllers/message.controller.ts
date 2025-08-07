@@ -7,6 +7,7 @@ import {
   getAllChatRoom,
   getLastChats,
   searchChatRoomByMember,
+  updateMessageStatus,
   updateReadRecord,
 } from "../services/message.service";
 
@@ -83,6 +84,8 @@ export const messageController = {
         result.userMember2.id === userId
           ? result.userMember1
           : result.userMember2;
+
+      await updateMessageStatus(result.Message[0].chatRoomId, targetObj.id);
       return {
         id: result.id,
         message: result.Message,
@@ -118,19 +121,23 @@ export const messageController = {
               return {
                 id: item.id,
                 lastStatus: item.lastStatus,
+                unreadCount: item.unreadCount,
                 user: item.userMember2,
                 Message: item.Message[0],
                 createdAt: item.createdAt,
                 updatedAt: item.updatedAt,
+                chatRoomId: item.Message[0]?.chatRoomId,
               };
             } else if (item.memberId2 === userId) {
               return {
                 id: item.id,
                 lastStatus: item.lastStatus,
+                unreadCount: item.unreadCount,
                 user: item.userMember1,
                 Message: item.Message[0],
                 createdAt: item.createdAt,
                 updatedAt: item.updatedAt,
+                chatRoomId: item.Message[0]?.chatRoomId,
               };
             }
           }),

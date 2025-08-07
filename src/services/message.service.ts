@@ -162,11 +162,45 @@ export const getLastChats = async (userId: string) => {
         },
       },
       Message: {
+        where: {
+          NOT: {
+            writerId: userId,
+          },
+        },
         orderBy: {
           createdAt: "desc",
         },
       },
     },
   });
-  return chats;
+
+  const modChats = chats.map((item) => {
+    const unreadCount = item.Message.reduce((acc, item) => {
+      if (item.status === "Unread") {
+        return (acc += 1);
+      }
+      return acc;
+    }, 0);
+    return { ...item, unreadCount };
+  });
+
+  return modChats;
+};
+
+export const updateMessageStatus = async (
+  chatRoomId: string,
+  writerId: string
+) => {
+  const result = await db.message.updateMany({
+    where: {
+      status: "Unread",
+      chatRoomId,
+      writerId,
+    },
+    data: {
+      status: "Read",
+    },
+  });
+
+  return result;
 };
