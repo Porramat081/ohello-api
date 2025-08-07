@@ -128,7 +128,7 @@ export const getFeedPosts = async (
       },
     },
     orderBy: {
-      updatedAt: "desc",
+      createdAt: "desc",
     },
   });
   return result;

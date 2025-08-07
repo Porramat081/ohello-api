@@ -38,7 +38,10 @@ export const messageController = {
         !friendChat.yourFriend?.length ||
         friendChat.yourFriend?.length === 0
       ) {
-        throw new ErrorCustom("Can't get chat message", 401);
+        return {
+          success: false,
+          message: "you don't have any friend",
+        };
       }
 
       return {
