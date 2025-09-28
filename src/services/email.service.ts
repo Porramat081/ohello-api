@@ -39,6 +39,8 @@ export const sendVerifyCode = async (input: SendingInput) => {
       refreshToken: process.env.REFRESH_TOKEN,
       accessToken: accessToken,
     },
+    logger: true,
+    debug: true,
   } as nodemailer.TransportOptions);
   const mailOptions = {
     from: `Ohello Support <${process.env.GMAIL_USER}>`,
