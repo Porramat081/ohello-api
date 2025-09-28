@@ -1,6 +1,7 @@
 import { env } from "bun";
 import { generateVerifyEmail } from "../utils/email";
 import nodemailer from "nodemailer";
+import { google } from "googleapis";
 
 type SendingInput = {
   email: string;
@@ -12,11 +13,25 @@ type SendingInput = {
 
 export const sendVerifyCode = async (input: SendingInput) => {
   const verifyLink = process.env.SENDINGMAIL_DOMAIN || "";
+  const oAuth2Client = new google.auth.OAuth2(
+    process.env.OAUTH_CLIENT_ID,
+    process.env.OAUTH_CLIENT_SECRET,
+    process.env.REDIRECT_URL
+  );
+  oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
+
+  const accessTokenResponse = await oAuth2Client.getAccessToken();
+  const accessToken = accessTokenResponse?.token;
+
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
+      type: "OAuth2",
       user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASS,
+      clientId: process.env.OAUTH_CLIENT_ID,
+      clientSecret: process.env.OAUTH_CLIENT_SECRET,
+      refreshToken: process.env.REFRESH_TOKEN,
+      accessToken: accessToken,
     },
   });
   const mailOptions = {
