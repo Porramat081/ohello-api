@@ -11,49 +11,68 @@ type SendingInput = {
   | { firstName: string; surname: string; fullname?: never }
 );
 
+type RawEmail = {
+  from: string;
+  to: string;
+  subject: string;
+  text?: string;
+  html?: string;
+};
+
+const buildRaw = (props: RawEmail) => {
+  const boundary = "mixed_boundary";
+  const headers = [
+    `From: ${props.from}`,
+    `To: ${props.to}`,
+    `Subject: ${props.subject}`,
+    "MIME-Version: 1.0",
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    "",
+    `--${boundary}`,
+    "Content-Type: text/plain; charset=UTF-8",
+    "",
+    props.text ?? "",
+    `--${boundary}`,
+    "Content-Type: text/html; charset=UTF-8",
+    "",
+    props.html ?? "",
+    `--${boundary}--`,
+  ].join("\r\n");
+
+  // base64url
+  return Buffer.from(headers)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+};
+
 export const sendVerifyCode = async (input: SendingInput) => {
-  const verifyLink = process.env.SENDINGMAIL_DOMAIN || "";
   const oAuth2Client = new google.auth.OAuth2(
     process.env.OAUTH_CLIENT_ID,
     process.env.OAUTH_CLIENT_SECRET,
     process.env.REDIRECT_URL
   );
   oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
+  const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
+  const verifyLink = process.env.SENDINGMAIL_DOMAIN || "";
 
-  const accessTokenResponse = await oAuth2Client.getAccessToken();
-  const accessToken = accessTokenResponse?.token;
-
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    requireTLS: true,
-    connectionTimeout: 15000,
-    greetingTimeout: 10000,
-    socketTimeout: 20000,
-    family: 4,
-    auth: {
-      type: "OAuth2",
-      user: process.env.GMAIL_USER,
-      clientId: process.env.OAUTH_CLIENT_ID,
-      clientSecret: process.env.OAUTH_CLIENT_SECRET,
-      refreshToken: process.env.REFRESH_TOKEN,
-      accessToken: accessToken,
-    },
-    logger: true,
-    debug: true,
-  } as nodemailer.TransportOptions);
-  const mailOptions = {
+  const raw = buildRaw({
     from: `Ohello Support <${process.env.GMAIL_USER}>`,
     to: input.email,
     subject: "Ohello Email Verification",
+    text: `Your verification code ${input.verifyCode}`,
     html: generateVerifyEmail(
       input.email,
       input.fullname || input.firstName + " " + input.surname,
       input.verifyCode,
       verifyLink
     ),
-  };
-  const result = await transporter.sendMail(mailOptions);
+  });
+
+  const result = await gmail.users.messages.send({
+    userId: "me",
+    requestBody: { raw },
+  });
   return result;
 };
