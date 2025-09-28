@@ -24,7 +24,13 @@ export const sendVerifyCode = async (input: SendingInput) => {
   const accessToken = accessTokenResponse?.token;
 
   const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    connectionTimeout: 15000,
+    greetingTimeout: 10000,
+    socketTimeout: 20000,
+    family: 4,
     auth: {
       type: "OAuth2",
       user: process.env.GMAIL_USER,
